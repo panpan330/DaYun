@@ -1,0 +1,203 @@
+# RAG Internal Package
+
+This package contains internal RAG building blocks for the AI service.
+
+It is intentionally separate from `app/services` and `app/routers`:
+
+- `app/rag` holds RAG domain components such as documents, chunks, loaders, splitters, embeddings, vector store adapters, retrievers, generators, and pipelines.
+- `app/services` coordinates application use cases and external clients.
+- `app/routers` exposes HTTP APIs.
+- `app/schemas` holds API request and response models.
+
+Current files:
+
+```text
+documents.py  Internal RAG document and chunk models.
+loaders.py    Load Markdown/txt files into RagDocument objects.
+splitters.py  Split RagDocument objects into RagChunk objects.
+metadata.py   Normalize and validate RAG metadata before Qdrant payload writes.
+embeddings.py Convert texts into deterministic placeholder vectors or OpenAI-compatible real embedding vectors, with batch helpers and storage estimation.
+filters.py    Build Qdrant-style payload filters and RAG access scopes from supported metadata fields.
+vector_store.py Build Qdrant points, upsert embedded chunks, delete points by filter, and query through the REST API.
+milvus_store.py Build Milvus entities, create schema/index, upsert embedded chunks, and search through PyMilvus.
+ingestion.py  Orchestrate load -> split -> embed -> upsert, document deletion, and directory refresh flows.
+retriever.py  Convert a user query into a vector and retrieve filtered top_k chunks above an optional score threshold.
+generator.py  Build RAG context from retrieved chunks, ask the model for a grounded answer, return backend-generated citations, and handle no-context fallbacks.
+citation_verification.py Verify that RAG answer citations point back to the retrieved chunks used as generation context.
+context_compression.py Compress retrieved chunks into a smaller generation context with budget reports and debug lines.
+query_rewrite.py Rewrite colloquial user questions into retrieval-oriented queries for learning and testing.
+multi_query.py Generate multiple retrieval-oriented query variants from one query.
+query_intent.py Classify user questions before RAG into policy, order, ticket, process, smalltalk, unsafe, or unclear routes.
+knowledge_routing.py Route RAG queries to one or more knowledge bases, collections, business domains, doc types, and permission scopes.
+agent_boundary.py Explain and structure the responsibility boundary between RAG retrieval, Agent workflows, tool execution, safety blocking, direct answers, and clarifying questions.
+score_interpretation.py Explain retrieval score direction, threshold comparison, and cross-backend comparability.
+tuning.py     Build chunk and retrieval tuning reports for observing chunk_size, chunk_overlap, top_k, and score_threshold effects, and convert RAG metrics/bad cases into parameter tuning recommendations.
+hybrid.py     Provide simple keyword retrieval, vector + keyword result fusion, and debug-friendly hybrid fusion reports.
+rerank.py     Rerank retrieved candidates with rule-based or HTTP model rerankers, score-direction-aware normalization, fallback, and rank-change reports.
+security.py   Inspect retrieved chunks for permission, prompt-injection, and sensitive-data risks before model context construction, with risk levels and blocking reasons.
+performance.py Build learning utilities for retrieval cache keys, TTL caching, batch planning, timing classification, degradation decisions, and performance protection reports.
+evaluation.py Build RAG evaluation case schemas, dataset coverage reports, answer-quality evaluation, retrieval metric cases, Hit@K, Hit Rate@K, Recall@K, Precision@K, MRR@K, metric breakdowns, bad case root-cause analysis, and bad case reports.
+observability.py Build safe RAG observability events for query, retrieval, rerank, citation, timing, and warning snapshots.
+data_update.py Build document manifests, detect new/modified/deleted sources, and plan incremental update or full reindex actions.
+production_readiness.py Build RAG production readiness checklists and reports across quality, security, performance, cost, observability, data, and Agent boundaries.
+errors.py     Map embedding and vector-store failures to stable application errors.
+```
+
+Planned files for later lessons:
+
+```text
+pipeline.py   Orchestrate ingestion and question-answering flows.
+```
+
+Stage 4 lesson 15 adds basic top_k retrieval with fake query embeddings and Qdrant
+Query API parsing. Stage 4 lesson 16 adds basic payload filtering by supported
+metadata fields such as permission group, business domain, document type, and
+source. Stage 4 lesson 17 adds score_threshold support so low-scoring retrieved
+chunks can be excluded before answer generation. Stage 4 lesson 18 adds the first
+RAG generation step: formatting retrieved chunks as model context and asking the
+model to answer from that context. Stage 4 lesson 19 adds chunk-level structured
+citations generated by the backend from retrieved chunks. Stage 4 lesson 20 adds
+structured no-context handling so empty retrieved chunks return a `no_context`
+answer with empty citations and fixed suggestions instead of calling the model.
+Stage 4 lesson 21 adds RAG error mapping for embedding failures, bad embedding
+responses, vector-store failures, and collection configuration mismatches. It still
+does not perform full retrieval diagnostics, statement-level citation verification,
+automatic query rewriting, retry policies, or real embedding model calls. Stage 4
+lesson 22 adds reusable RAG test fakes in `tests/rag_fakes.py` so retrieval,
+ingestion, no-context handling, and error mapping can be tested without real
+embedding providers, Qdrant, or LLM calls.
+Stage 4 lesson 23 adds document deletion and refresh ingestion basics: Qdrant
+points can be deleted by payload filter, documents can be deleted by `source`,
+and directory refresh can remove old chunks for each source before upserting the
+new chunks.
+Stage 4 lesson 24 adds real embedding preparation: independent embedding settings,
+an OpenAI-compatible embedding model adapter, text batching helpers, and dense
+vector storage estimation. It does not switch existing fake smoke tests to real
+embedding calls.
+Stage 4 lesson 25 adds retrieval tuning helpers for comparing chunk splitting
+parameters and query-time retrieval parameters, plus a local chunk tuning preview
+script that does not require Qdrant.
+Stage 4 lesson 26 adds hybrid retrieval basics: simple keyword matching over local
+chunks, metadata filtering for keyword retrieval, score normalization, vector +
+keyword result de-duplication by chunk ID, weighted fusion, and a keyword search
+preview script that does not require Qdrant.
+Stage 4 lesson 27 adds rerank basics: retrieved candidates can be converted into a
+common rerank input model, scored with an explainable rule-based reranker, and
+returned with original rank, rerank rank, score breakdown, and debug lines. It
+does not call a real rerank model or an LLM reranker.
+Stage 4 lesson 28 adds RAG security basics: retrieved chunks can be checked against
+an allowed permission group policy, scanned for prompt-injection signals and
+sensitive-data patterns, filtered into safe chunks, and summarized with structured
+findings. It does not replace a real permission system, DLP product, or output
+guardrail.
+Stage 4 lesson 29 adds RAG performance basics: retrieval cache keys include query
+hashes and retrieval scope, an in-memory TTL cache demonstrates hit/miss/eviction,
+batch plans show how embedding work can be grouped, operation timing can be marked
+as ok/near-timeout/timed-out, and degradation decisions are represented explicitly.
+It does not replace Redis, production monitoring, hard request cancellation, or a
+real circuit breaker.
+Stage 4 lesson 30 summarizes the Qdrant-based RAG mainline: ingestion flow,
+question-answering flow, module ownership, validation checklist, learning-version
+limits, production gaps, and the transition into Milvus comparison lessons.
+Stage 4 lesson 34 adds a Milvus vector store adapter for the same local
+knowledge-base chunks: schema creation, vector index creation, entity upsert,
+flush-on-wait behavior for stable smoke tests, scalar-filter expression
+conversion, and top_k vector search through PyMilvus.
+Stage 4 lesson 35 expands the Milvus adapter with metadata/scalar filtering and
+scalar index basics: high-frequency metadata fields get `INVERTED` scalar
+indexes, existing collections can be checked and backfilled with missing scalar
+indexes, and Milvus boolean expressions now support exact match, `in`, integer
+range, `should`, and `must_not` conditions for learning-focused RAG filters.
+Stage 4 lesson 38 adds minimal retrieval evaluation: versioned local retrieval
+cases, reusable metric calculation for Hit Rate@K, Recall@K, Precision@K, and
+MRR@K, plus a local keyword-based smoke script for reading summary metrics and
+bad cases without requiring Qdrant, Milvus, or a real embedding model.
+Stage 4 lesson 39 closes the RAG phase with a final review of the ingestion
+chain, question-answering chain, module ownership, Qdrant/Milvus selection,
+retrieval quality, security, performance, evaluation, and the transition into
+LangGraph-based agent orchestration. It does not add new runtime code.
+Stage 9 lesson 2 adds query rewrite basics: a deterministic rule-based rewriter
+maps common colloquial customer-service questions to retrieval-oriented policy
+queries, records rewrite reasons, preserves detected business entities, and emits
+warnings for queries that may need tool calling or contain instruction-like text.
+Stage 9 lesson 3 adds multi-query basics: a deterministic rule-based generator
+keeps the original query, expands safe policy questions into multiple retrieval
+angles, avoids expansion when business entities or instruction-like text are
+detected, and exposes debug-friendly query type and reason metadata.
+Stage 9 lesson 4 adds query intent classification before RAG: a deterministic
+classifier routes questions to policy RAG, process RAG, order tool calling,
+ticket write flow, direct smalltalk answer, safety guard, or clarification, and
+marks whether query rewrite and multi-query expansion should run.
+Stage 9 lesson 5 strengthens hybrid search explainability: hybrid fusion keeps
+vector and keyword scores visible, records vector-only, keyword-only, and
+overlapped results, and formats debug lines for retrieval tuning and bad-case
+analysis.
+Stage 9 lesson 6 adds retrieval score interpretation: Qdrant and Milvus metrics
+are described with explicit score direction, threshold operator, range hints, and
+cross-backend comparability warnings, and Milvus threshold filtering reuses the
+shared interpretation helper.
+Stage 9 lesson 7 strengthens rerank explainability: rerank can normalize
+lower-is-better retrieval scores such as L2 distance, and `RerankReport` records
+top-before/top-after changes, promoted chunks, dropped chunks, and debug lines.
+Stage 9 lesson 8 adds a real-rerank adapter boundary: `HttpReranker` posts
+query/candidate pairs to a generic rerank endpoint, validates provider results,
+builds `RerankedChunk` objects from model scores, and `rerank_with_fallback`
+falls back to rule-based rerank when the provider fails.
+Stage 9 lesson 9 adds citation source verification after answer generation:
+`RagAnswer` citations can be checked against the retrieved chunks that formed
+the model context, catching missing citations, fake chunk IDs, source-index
+mismatches, source metadata mismatches, duplicate citations, and low lexical
+support warnings.
+Stage 9 lesson 10 adds context compression before answer generation: retrieved
+chunks can be kept, compressed, or dropped under a character budget, while
+preserving `RetrievedChunk` compatibility and recording compression metadata,
+per-chunk actions, saved characters, and debug lines.
+Stage 9 lesson 11 adds metadata access-scope filtering: `RagAccessScope`
+represents the current user, tenant, permission groups, business domains, document
+types, sources, visibility, and status exclusions, then converts that business
+scope into Qdrant-style payload filters that can also be translated by the Milvus
+adapter.
+Stage 9 lesson 12 strengthens RAG prompt-injection defense: prompt-injection
+rules now carry severity, retrieved metadata can be scanned as model-visible text,
+medium-risk delimiter findings can warn without blocking, and reports expose risk
+level, finding counts by category, and blocked reason codes.
+Stage 9 lesson 13 adds RAG evaluation dataset design: broader cases now describe
+expected behavior, answer points, expected evidence, access context, refusal
+reason codes, tags, priority, and coverage reports before later lessons calculate
+retrieval and answer-quality metrics.
+Stage 9 lesson 14 connects RAG evaluation cases to retrieval metrics: answer and
+no-context cases can be converted into retrieval metric cases, and per-case
+metric breakdowns explain Hit@K, Recall@K, Precision@K, and MRR@K formulas.
+Stage 9 lesson 15 adds deterministic RAG answer-quality evaluation: final answers
+can be checked against expected behavior, answer points, cited sources, forbidden
+sources, and refusal reason codes without calling a real model judge.
+Stage 9 lesson 16 adds RAG bad-case root-cause analysis: retrieval and answer
+quality failures can be classified into retrieval, ranking, generation, citation,
+refusal, access-control, and security layers with evidence and suggested actions.
+Stage 9 lesson 17 adds parameter tuning recommendations: retrieval metrics,
+answer-quality summaries, and bad-case layers can produce review/increase/decrease
+advice for chunk_size, chunk_overlap, top_k, score_threshold, rerank, prompt,
+metadata filters, no-context gates, and security policy.
+Stage 9 lesson 18 adds performance protection reports: operation timings, cache
+stats, and degradation decisions can produce cache, timeout, degradation, rerank,
+retrieval, and generation recommendations with evidence and risk notes.
+Stage 9 lesson 19 adds RAG observability events: query hashes and redacted
+previews, retrieved chunk snapshots, rerank summaries, citation verification
+summaries, stage timings, and warning codes can be collected into safe log
+payloads without writing raw chunk content.
+Stage 9 lesson 20 adds RAG data update planning: previous and current document
+manifests can be compared to detect new, modified, deleted, and unchanged
+sources, then mapped to ingest_new, refresh_source, delete_source, skip, or
+full reindex actions with cache invalidation and evaluation rerun hints.
+Stage 9 lesson 21 adds multi-knowledge-base routing: RAG query intent and
+keywords can select customer policy, logistics, account security, process SOP,
+internal escalation, or fallback policy knowledge bases, while access scope
+restricts the route payload filters before retrieval.
+Stage 9 lesson 22 adds RAG and Agent boundary decisions: policy/process questions
+stay RAG-owned, live order data belongs to read tools, ticket creation belongs to
+Agent workflows with confirmation, unsafe queries are blocked before retrieval,
+and RAG can be used as Agent context without becoming the workflow owner.
+Stage 9 lesson 23 adds production readiness checklists: quality, security,
+performance, cost, observability, data, and Agent-boundary checks can be marked
+passed, warning, failed, or not_checked and summarized into ready, conditional,
+or blocked release decisions.

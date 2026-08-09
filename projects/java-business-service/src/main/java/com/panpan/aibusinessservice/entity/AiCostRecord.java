@@ -1,0 +1,38 @@
+package com.panpan.aibusinessservice.entity;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+
+public class AiCostRecord {
+    private Long id;
+    private String model;
+    private String intent;
+    private int callCount;
+    private long inputTokens;
+    private long outputTokens;
+    private long totalTokens;
+    private BigDecimal estimatedCost;
+    private Instant windowStart;
+    private Instant windowEnd;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getModel() { return model; }
+    public void setModel(String model) { this.model = model; }
+    public String getIntent() { return intent; }
+    public void setIntent(String intent) { this.intent = intent; }
+    public int getCallCount() { return callCount; }
+    public void setCallCount(int callCount) { this.callCount = callCount; }
+    public long getInputTokens() { return inputTokens; }
+    public void setInputTokens(long inputTokens) { this.inputTokens = inputTokens; }
+    public long getOutputTokens() { return outputTokens; }
+    public void setOutputTokens(long outputTokens) { this.outputTokens = outputTokens; }
+    public long getTotalTokens() { return totalTokens; }
+    public void setTotalTokens(long totalTokens) { this.totalTokens = totalTokens; }
+    public BigDecimal getEstimatedCost() { return estimatedCost; }
+    public void setEstimatedCost(BigDecimal estimatedCost) { this.estimatedCost = estimatedCost; }
+    public Instant getWindowStart() { return windowStart; }
+    public void setWindowStart(Instant windowStart) { this.windowStart = windowStart; }
+    public Instant getWindowEnd() { return windowEnd; }
+    public void setWindowEnd(Instant windowEnd) { this.windowEnd = windowEnd; }
+}

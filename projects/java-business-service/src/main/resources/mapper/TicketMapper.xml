@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.TicketMapper">
+    <resultMap id="TicketResultMap" type="com.panpan.aibusinessservice.entity.Ticket">
+        <id column="ticket_id" property="ticketId"/>
+        <result column="requester_user_id" property="requesterUserId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="ticket_status" property="ticketStatus"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+        <result column="category" property="category"/>
+        <result column="priority" property="priority"/>
+        <result column="related_order_id" property="relatedOrderId"/>
+        <result column="assignee_user_id" property="assigneeUserId"/>
+        <result column="assignee_display_name" property="assigneeDisplayName"/>
+        <result column="source" property="source"/>
+        <result column="confirmation_id" property="confirmationId"/>
+        <result column="idempotency_key" property="idempotencyKey"/>
+        <result column="request_fingerprint" property="requestFingerprint"/>
+        <result column="created_trace_id" property="createdTraceId"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <resultMap id="TicketEventResultMap" type="com.panpan.aibusinessservice.entity.TicketEvent">
+        <id column="event_id" property="eventId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="ticket_id" property="ticketId"/>
+        <result column="event_type" property="eventType"/>
+        <result column="event_payload" property="eventPayload"/>
+        <result column="operator_type" property="operatorType"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="trace_id" property="traceId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <resultMap id="TicketMessageResultMap" type="com.panpan.aibusinessservice.entity.TicketMessage">
+        <id column="message_id" property="messageId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="ticket_id" property="ticketId"/>
+        <result column="visibility" property="visibility"/>
+        <result column="content" property="content"/>
+        <result column="author_type" property="authorType"/>
+        <result column="author_user_id" property="authorUserId"/>
+        <result column="author_display_name" property="authorDisplayName"/>
+        <result column="trace_id" property="traceId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <sql id="TicketColumns">
+        t.ticket_id,
+        t.requester_user_id,
+        t.tenant_id,
+        t.ticket_status,
+        t.title,
+        t.description,
+        t.category,
+        t.priority,
+        t.related_order_id,
+        ta.assignee_user_id,
+        ta.assignee_display_name,
+        t.source,
+        t.confirmation_id,
+        t.idempotency_key,
+        t.request_fingerprint,
+        t.created_trace_id,
+        t.created_at,
+        t.updated_at
+    </sql>
+
+    <sql id="TicketAssignmentJoin">
+        FROM tickets t
+        LEFT JOIN ticket_assignments ta
+          ON ta.tenant_id = t.tenant_id
+         AND ta.ticket_id = t.ticket_id
+    </sql>
+
+    <select id="selectByTenantIdAndIdempotencyKey" resultMap="TicketResultMap">
+        SELECT
+          <include refid="TicketColumns"/>
+        <include refid="TicketAssignmentJoin"/>
+        WHERE t.tenant_id = #{tenantId}
+          AND t.idempotency_key = #{idempotencyKey}
+    </select>
+
+    <select id="selectByTenantIdAndTicketId" resultMap="TicketResultMap">
+        SELECT
+          <include refid="TicketColumns"/>
+        <include refid="TicketAssignmentJoin"/>
+        WHERE t.tenant_id = #{tenantId}
+          AND t.ticket_id = #{ticketId}
+    </select>
+
+    <select id="selectByTenantIdAndRequesterUserId" resultMap="TicketResultMap">
+        SELECT
+          <include refid="TicketColumns"/>
+        <include refid="TicketAssignmentJoin"/>
+        WHERE t.tenant_id = #{tenantId}
+          AND t.requester_user_id = #{requesterUserId}
+        ORDER BY t.updated_at DESC, t.ticket_id ASC
+    </select>
+
+    <select id="selectAllByTenantId" resultMap="TicketResultMap">
+        SELECT
+          <include refid="TicketColumns"/>
+        <include refid="TicketAssignmentJoin"/>
+        WHERE t.tenant_id = #{tenantId}
+        ORDER BY t.updated_at DESC, t.ticket_id ASC
+    </select>
+
+    <insert id="insertTicket" parameterType="com.panpan.aibusinessservice.entity.Ticket">
+        INSERT INTO tickets (
+          tenant_id,
+          ticket_id,
+          requester_user_id,
+          related_order_id,
+          title,
+          description,
+          category,
+          priority,
+          ticket_status,
+          source,
+          confirmation_id,
+          idempotency_key,
+          request_fingerprint,
+          created_trace_id,
+          created_at,
+          updated_at
+        ) VALUES (
+          #{tenantId},
+          #{ticketId},
+          #{requesterUserId},
+          #{relatedOrderId},
+          #{title},
+          #{description},
+          #{category},
+          #{priority},
+          #{ticketStatus},
+          #{source},
+          #{confirmationId},
+          #{idempotencyKey},
+          #{requestFingerprint},
+          #{createdTraceId},
+          #{createdAt},
+          #{createdAt}
+        )
+    </insert>
+
+    <insert id="insertTicketAssignment">
+        INSERT INTO ticket_assignments (
+          tenant_id,
+          ticket_id,
+          assignee_user_id,
+          assignee_display_name,
+          assigned_by_user_id,
+          assigned_at,
+          updated_at
+        ) VALUES (
+          #{tenantId},
+          #{ticketId},
+          #{assigneeUserId},
+          #{assigneeDisplayName},
+          #{assignedByUserId},
+          #{assignedAt},
+          #{assignedAt}
+        )
+    </insert>
+
+    <update id="updateTicketAssignment">
+        UPDATE ticket_assignments
+        SET assignee_user_id = #{assigneeUserId},
+            assignee_display_name = #{assigneeDisplayName},
+            assigned_by_user_id = #{assignedByUserId},
+            assigned_at = #{assignedAt},
+            updated_at = #{assignedAt}
+        WHERE tenant_id = #{tenantId}
+          AND ticket_id = #{ticketId}
+    </update>
+
+    <select id="selectEventsByTenantIdAndTicketId" resultMap="TicketEventResultMap">
+        SELECT
+          event_id,
+          tenant_id,
+          ticket_id,
+          event_type,
+          event_payload,
+          operator_type,
+          operator_id,
+          trace_id,
+          created_at
+        FROM ticket_events
+        WHERE tenant_id = #{tenantId}
+          AND ticket_id = #{ticketId}
+        ORDER BY created_at ASC, id ASC
+    </select>
+
+    <select id="selectMessagesByTenantIdAndTicketId" resultMap="TicketMessageResultMap">
+        SELECT
+          message_id,
+          tenant_id,
+          ticket_id,
+          visibility,
+          content,
+          author_type,
+          author_user_id,
+          author_display_name,
+          trace_id,
+          created_at
+        FROM ticket_messages
+        WHERE tenant_id = #{tenantId}
+          AND ticket_id = #{ticketId}
+        <if test="!includeInternal">
+          AND visibility = 'public'
+        </if>
+        ORDER BY created_at ASC, id ASC
+    </select>
+
+    <update id="updateTicketStatus">
+        UPDATE tickets
+        SET ticket_status = #{ticketStatus},
+            updated_at = #{updatedAt}
+        WHERE tenant_id = #{tenantId}
+          AND ticket_id = #{ticketId}
+    </update>
+
+    <update id="touchTicketUpdatedAt">
+        UPDATE tickets
+        SET updated_at = #{updatedAt}
+        WHERE tenant_id = #{tenantId}
+          AND ticket_id = #{ticketId}
+    </update>
+
+    <insert id="insertTicketMessage">
+        INSERT INTO ticket_messages (
+          tenant_id,
+          message_id,
+          ticket_id,
+          visibility,
+          content,
+          author_type,
+          author_user_id,
+          author_display_name,
+          trace_id,
+          created_at
+        ) VALUES (
+          #{tenantId},
+          #{messageId},
+          #{ticketId},
+          #{visibility},
+          #{content},
+          #{authorType},
+          #{authorUserId},
+          #{authorDisplayName},
+          #{traceId},
+          #{createdAt}
+        )
+    </insert>
+
+    <insert id="insertTicketEvent">
+        INSERT INTO ticket_events (
+          tenant_id,
+          event_id,
+          ticket_id,
+          event_type,
+          event_payload,
+          operator_type,
+          operator_id,
+          trace_id,
+          created_at
+        ) VALUES (
+          #{tenantId},
+          #{eventId},
+          #{ticketId},
+          #{eventType},
+          #{eventPayload},
+          #{operatorType},
+          #{operatorId},
+          #{traceId},
+          #{createdAt}
+        )
+    </insert>
+</mapper>

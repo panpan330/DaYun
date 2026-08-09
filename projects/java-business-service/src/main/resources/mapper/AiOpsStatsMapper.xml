@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.AiOpsStatsMapper">
+
+  <select id="countFeedbackByRating" resultType="com.panpan.aibusinessservice.mapper.AiOpsStatsMapper$RatingCount">
+    SELECT rating, COUNT(*) AS count
+    FROM ai_response_feedback
+    WHERE created_at &gt;= #{cutoff}
+    GROUP BY rating
+  </select>
+
+  <select id="countHandoffsByStatus" resultType="com.panpan.aibusinessservice.mapper.AiOpsStatsMapper$StatusCount">
+    SELECT status, COUNT(*) AS count
+    FROM ai_human_handoffs
+    WHERE created_at &gt;= #{cutoff}
+    GROUP BY status
+  </select>
+
+  <select id="countHandoffsByEmotion" resultType="com.panpan.aibusinessservice.mapper.AiOpsStatsMapper$EmotionCount">
+    SELECT LOWER(REPLACE(COALESCE(NULLIF(emotion, ''), 'unknown'), 'CustomerEmotion.', '')) AS emotion, COUNT(*) AS count
+    FROM ai_human_handoffs
+    WHERE created_at &gt;= #{cutoff}
+    GROUP BY LOWER(REPLACE(COALESCE(NULLIF(emotion, ''), 'unknown'), 'CustomerEmotion.', ''))
+  </select>
+
+  <select id="countUserMessagesByDay" resultType="com.panpan.aibusinessservice.mapper.AiOpsStatsMapper$DayCount">
+    SELECT CAST(created_at AS DATE) AS stat_date, COUNT(*) AS count
+    FROM ai_messages
+    WHERE sender_type = 'user' AND created_at &gt;= #{cutoff}
+    GROUP BY CAST(created_at AS DATE)
+    ORDER BY stat_date
+  </select>
+
+</mapper>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.KnowledgeDocumentMapper">
+    <resultMap id="KnowledgeDocumentResultMap" type="com.panpan.aibusinessservice.entity.KnowledgeDocument">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="document_id" property="documentId"/>
+        <result column="title" property="title"/>
+        <result column="doc_type" property="docType"/>
+        <result column="business_domain" property="businessDomain"/>
+        <result column="permission_group" property="permissionGroup"/>
+        <result column="status" property="status"/>
+        <result column="source_file_name" property="sourceFileName"/>
+        <result column="chunk_count" property="chunkCount"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="KnowledgeDocumentColumns">
+        id,
+        tenant_id,
+        document_id,
+        title,
+        doc_type,
+        business_domain,
+        permission_group,
+        status,
+        source_file_name,
+        chunk_count,
+        updated_by,
+        created_at,
+        updated_at
+    </sql>
+
+    <select id="selectAllByTenantId" resultMap="KnowledgeDocumentResultMap">
+        SELECT
+        <include refid="KnowledgeDocumentColumns"/>
+        FROM knowledge_documents
+        WHERE tenant_id = #{tenantId}
+        ORDER BY updated_at DESC, document_id ASC
+    </select>
+
+    <select id="selectVisibleByTenantIdAndPermissionGroups" resultMap="KnowledgeDocumentResultMap">
+        SELECT
+        <include refid="KnowledgeDocumentColumns"/>
+        FROM knowledge_documents
+        WHERE tenant_id = #{tenantId}
+          AND permission_group IN
+          <foreach collection="permissionGroups" item="permissionGroup" open="(" separator="," close=")">
+            #{permissionGroup}
+          </foreach>
+        ORDER BY updated_at DESC, document_id ASC
+    </select>
+
+    <select id="selectByTenantIdAndDocumentId" resultMap="KnowledgeDocumentResultMap">
+        SELECT
+        <include refid="KnowledgeDocumentColumns"/>
+        FROM knowledge_documents
+        WHERE tenant_id = #{tenantId}
+          AND document_id = #{documentId}
+    </select>
+
+    <insert id="upsert">
+        INSERT INTO knowledge_documents (
+            tenant_id,
+            document_id,
+            title,
+            doc_type,
+            business_domain,
+            permission_group,
+            status,
+            source_file_name,
+            chunk_count,
+            updated_by,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{tenantId},
+            #{documentId},
+            #{title},
+            #{docType},
+            #{businessDomain},
+            #{permissionGroup},
+            #{status},
+            #{sourceFileName},
+            #{chunkCount},
+            #{updatedBy},
+            NOW(6),
+            NOW(6)
+        )
+        ON DUPLICATE KEY UPDATE
+            title = VALUES(title),
+            doc_type = VALUES(doc_type),
+            business_domain = VALUES(business_domain),
+            permission_group = VALUES(permission_group),
+            status = VALUES(status),
+            source_file_name = VALUES(source_file_name),
+            chunk_count = VALUES(chunk_count),
+            updated_by = VALUES(updated_by),
+            updated_at = NOW(6)
+    </insert>
+
+    <delete id="deleteByTenantIdAndDocumentId">
+        DELETE FROM knowledge_documents
+        WHERE tenant_id = #{tenantId}
+          AND document_id = #{documentId}
+    </delete>
+</mapper>

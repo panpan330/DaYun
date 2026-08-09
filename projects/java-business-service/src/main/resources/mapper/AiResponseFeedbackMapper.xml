@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.AiResponseFeedbackMapper">
+    <resultMap id="AiResponseFeedbackResultMap" type="com.panpan.aibusinessservice.entity.AiResponseFeedback">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="user_id" property="userId"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="trace_id" property="traceId"/>
+        <result column="rating" property="rating"/>
+        <result column="reason" property="reason"/>
+        <result column="agent_route" property="agentRoute"/>
+        <result column="citation_count" property="citationCount"/>
+        <result column="human_handoff_suggested" property="humanHandoffSuggested"/>
+        <result column="user_message_excerpt" property="userMessageExcerpt"/>
+        <result column="assistant_answer_excerpt" property="assistantAnswerExcerpt"/>
+        <result column="citation_summary_json" property="citationSummaryJson"/>
+        <result column="review_status" property="reviewStatus"/>
+        <result column="bad_case_id" property="badCaseId"/>
+        <result column="reviewed_by_user_id" property="reviewedByUserId"/>
+        <result column="reviewed_at" property="reviewedAt"/>
+        <result column="review_note" property="reviewNote"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByIdentity" resultMap="AiResponseFeedbackResultMap">
+        SELECT * FROM ai_response_feedback
+        WHERE tenant_id = #{tenantId} AND user_id = #{userId}
+          AND conversation_id = #{conversationId} AND trace_id = #{traceId}
+    </select>
+
+    <select id="selectByTenantIdAndId" resultMap="AiResponseFeedbackResultMap">
+        SELECT * FROM ai_response_feedback WHERE tenant_id = #{tenantId} AND id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ai_response_feedback (
+          tenant_id, user_id, conversation_id, trace_id, rating, reason, agent_route,
+          citation_count, human_handoff_suggested, user_message_excerpt, assistant_answer_excerpt,
+          citation_summary_json, review_status, created_at, updated_at
+        ) VALUES (
+          #{tenantId}, #{userId}, #{conversationId}, #{traceId}, #{rating}, #{reason}, #{agentRoute},
+          #{citationCount}, #{humanHandoffSuggested}, #{userMessageExcerpt}, #{assistantAnswerExcerpt},
+          #{citationSummaryJson}, #{reviewStatus}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE ai_response_feedback
+        SET rating = #{rating}, reason = #{reason}, agent_route = #{agentRoute},
+            citation_count = #{citationCount}, human_handoff_suggested = #{humanHandoffSuggested},
+            user_message_excerpt = #{userMessageExcerpt}, assistant_answer_excerpt = #{assistantAnswerExcerpt},
+            citation_summary_json = #{citationSummaryJson},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="markBadCasePromoted">
+        UPDATE ai_response_feedback
+        SET review_status = 'regression_added', bad_case_id = #{badCaseId},
+            reviewed_by_user_id = #{reviewedByUserId}, reviewed_at = #{reviewedAt}, updated_at = #{reviewedAt}
+        WHERE tenant_id = #{tenantId} AND id = #{id}
+    </update>
+
+    <update id="updateReview">
+        UPDATE ai_response_feedback
+        SET review_status = #{reviewStatus}, review_note = #{reviewNote},
+            reviewed_by_user_id = #{reviewedByUserId}, reviewed_at = #{reviewedAt}, updated_at = #{reviewedAt}
+        WHERE tenant_id = #{tenantId} AND id = #{id}
+    </update>
+
+    <select id="countByTenantAndRating" resultType="long">
+        SELECT COUNT(*) FROM ai_response_feedback WHERE tenant_id = #{tenantId} AND rating = #{rating}
+    </select>
+
+    <select id="selectReasonCountsByTenantId" resultMap="AiResponseFeedbackResultMap">
+        SELECT reason, COUNT(*) AS citation_count
+        FROM ai_response_feedback
+        WHERE tenant_id = #{tenantId} AND rating = 'unhelpful'
+        GROUP BY reason
+        ORDER BY citation_count DESC, reason ASC
+    </select>
+
+    <select id="selectRecentUnhelpfulByTenantId" resultMap="AiResponseFeedbackResultMap">
+        SELECT * FROM ai_response_feedback
+        WHERE tenant_id = #{tenantId} AND rating = 'unhelpful'
+        ORDER BY updated_at DESC, id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

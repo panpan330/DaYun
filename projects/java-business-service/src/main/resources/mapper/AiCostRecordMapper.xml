@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.AiCostRecordMapper">
+
+  <insert id="batchUpsert">
+    INSERT INTO ai_cost_records
+      (model, intent, call_count, input_tokens, output_tokens, total_tokens, estimated_cost, window_start, window_end)
+    VALUES
+    <foreach collection="list" item="r" separator=",">
+      (#{r.model}, #{r.intent}, #{r.callCount}, #{r.inputTokens}, #{r.outputTokens}, #{r.totalTokens}, #{r.estimatedCost}, #{r.windowStart}, #{r.windowEnd})
+    </foreach>
+    ON DUPLICATE KEY UPDATE
+      call_count = call_count + VALUES(call_count),
+      input_tokens = input_tokens + VALUES(input_tokens),
+      output_tokens = output_tokens + VALUES(output_tokens),
+      total_tokens = total_tokens + VALUES(total_tokens),
+      estimated_cost = estimated_cost + VALUES(estimated_cost)
+  </insert>
+
+  <select id="summarizeByModel" resultType="com.panpan.aibusinessservice.mapper.SummaryRow">
+    SELECT model,
+           SUM(call_count) AS callCount,
+           SUM(input_tokens) AS inputTokens,
+           SUM(output_tokens) AS outputTokens,
+           SUM(total_tokens) AS totalTokens,
+           SUM(estimated_cost) AS estimatedCost
+    FROM ai_cost_records
+    GROUP BY model
+    ORDER BY estimatedCost DESC
+  </select>
+
+  <select id="summarizeByIntent" resultType="com.panpan.aibusinessservice.mapper.SummaryRow">
+    SELECT intent,
+           SUM(call_count) AS callCount,
+           SUM(input_tokens) AS inputTokens,
+           SUM(output_tokens) AS outputTokens,
+           SUM(total_tokens) AS totalTokens,
+           SUM(estimated_cost) AS estimatedCost
+    FROM ai_cost_records
+    GROUP BY intent
+    ORDER BY estimatedCost DESC
+  </select>
+
+  <select id="summarizeTotals" resultType="com.panpan.aibusinessservice.mapper.SummaryRow">
+    SELECT SUM(call_count) AS callCount,
+           SUM(input_tokens) AS inputTokens,
+           SUM(output_tokens) AS outputTokens,
+           SUM(total_tokens) AS totalTokens,
+           SUM(estimated_cost) AS estimatedCost
+    FROM ai_cost_records
+  </select>
+
+</mapper>

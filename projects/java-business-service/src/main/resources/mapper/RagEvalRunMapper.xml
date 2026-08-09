@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.RagEvalRunMapper">
+    <resultMap id="RagEvalRunResultMap" type="com.panpan.aibusinessservice.entity.RagEvalRun">
+        <id column="run_id" property="runId"/>
+        <result column="retriever" property="retriever"/>
+        <result column="started_at" property="startedAt"/>
+        <result column="completed_at" property="completedAt"/>
+        <result column="top_k" property="topK"/>
+        <result column="hit_rate" property="hitRate"/>
+        <result column="recall" property="recall"/>
+        <result column="precision" property="precision"/>
+        <result column="mrr" property="mrr"/>
+        <result column="case_count" property="caseCount"/>
+        <result column="details_json" property="detailsJson"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO rag_eval_runs
+            (run_id, retriever, started_at, completed_at, top_k, hit_rate, recall, `precision`, mrr, case_count, details_json)
+        VALUES
+            (#{runId}, #{retriever}, #{startedAt}, #{completedAt}, #{topK}, #{hitRate}, #{recall}, #{precision}, #{mrr}, #{caseCount}, #{detailsJson})
+        ON DUPLICATE KEY UPDATE
+            retriever = VALUES(retriever),
+            started_at = VALUES(started_at),
+            completed_at = VALUES(completed_at),
+            top_k = VALUES(top_k),
+            hit_rate = VALUES(hit_rate),
+            recall = VALUES(recall),
+            `precision` = VALUES(`precision`),
+            mrr = VALUES(mrr),
+            case_count = VALUES(case_count),
+            details_json = VALUES(details_json)
+    </insert>
+
+    <select id="listRecent" resultMap="RagEvalRunResultMap">
+        SELECT * FROM rag_eval_runs
+        ORDER BY started_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="latestByRetriever" resultMap="RagEvalRunResultMap">
+        SELECT * FROM rag_eval_runs
+        WHERE retriever = #{retriever}
+        ORDER BY started_at DESC, run_id DESC
+        LIMIT 1
+    </select>
+</mapper>

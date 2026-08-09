@@ -1,0 +1,117 @@
+[
+  {
+    "id": "refund_shipping_fee_001",
+    "query": "退货运费谁承担？",
+    "expected_sources": ["refund-return-policy.md"],
+    "expected_sections": ["运费处理"],
+    "expected_chunk_ids": ["refund_return_policy_chunk_0005"],
+    "permission_group": "customer_service",
+    "business_domain": "refund",
+    "notes": "应命中退款退货规则里的运费处理段落。"
+  },
+  {
+    "id": "refund_quality_001",
+    "query": "商品质量问题退货怎么办？",
+    "expected_sources": ["refund-return-policy.md"],
+    "expected_sections": ["商品质量问题"],
+    "expected_chunk_ids": ["refund_return_policy_chunk_0003"],
+    "permission_group": "customer_service",
+    "business_domain": "refund",
+    "notes": "应命中质量问题退货需要用户提供照片、视频或其他证明的段落。"
+  },
+  {
+    "id": "refund_arrival_001",
+    "query": "退款多久到账？",
+    "expected_sources": ["refund-return-policy.md"],
+    "expected_sections": ["退款到账时间"],
+    "expected_chunk_ids": ["refund_return_policy_chunk_0004"],
+    "permission_group": "customer_service",
+    "business_domain": "refund",
+    "notes": "应命中退款到账时间。"
+  },
+  {
+    "id": "order_shipping_time_001",
+    "query": "付款后多久发货？",
+    "expected_sources": ["order-shipping-policy.md"],
+    "expected_sections": ["正常发货时效"],
+    "expected_chunk_ids": ["order_shipping_policy_chunk_0002"],
+    "permission_group": "customer_service",
+    "business_domain": "order",
+    "notes": "应命中普通商品通常 24 小时内进入仓库处理流程。"
+  },
+  {
+    "id": "order_late_shipping_001",
+    "query": "超过 72 小时还没发货怎么办？",
+    "expected_sources": ["order-shipping-policy.md"],
+    "expected_sections": ["超过 72 小时未发货"],
+    "expected_chunk_ids": ["order_shipping_policy_chunk_0003"],
+    "permission_group": "customer_service",
+    "business_domain": "order",
+    "notes": "应命中超过 72 小时未发货的处理规则。"
+  },
+  {
+    "id": "order_ticket_001",
+    "query": "发货异常工单要记录什么信息？",
+    "expected_sources": ["order-shipping-policy.md"],
+    "expected_sections": ["发货异常工单"],
+    "expected_chunk_ids": ["order_shipping_policy_chunk_0004"],
+    "permission_group": "customer_service",
+    "business_domain": "order",
+    "notes": "应命中创建发货异常工单时需要记录的信息。"
+  },
+  {
+    "id": "logistics_no_update_001",
+    "query": "物流三天没有更新怎么办？",
+    "expected_sources": ["logistics-tracking-faq.txt"],
+    "expected_chunk_ids": ["logistics_tracking_faq_chunk_0001"],
+    "permission_group": "customer_service",
+    "business_domain": "logistics",
+    "notes": "应命中物流查询 FAQ。"
+  },
+  {
+    "id": "logistics_tracking_query_001",
+    "query": "怎么查询物流轨迹？",
+    "expected_sources": ["logistics-tracking-faq.txt"],
+    "expected_chunk_ids": ["logistics_tracking_faq_chunk_0001"],
+    "permission_group": "customer_service",
+    "business_domain": "logistics",
+    "notes": "应命中物流查询 FAQ。"
+  },
+  {
+    "id": "account_password_001",
+    "query": "忘记登录密码怎么处理？",
+    "expected_sources": ["account-security-faq.md"],
+    "expected_sections": ["忘记登录密码"],
+    "expected_chunk_ids": ["account_security_faq_chunk_0002"],
+    "permission_group": "customer_service",
+    "business_domain": "account",
+    "notes": "应命中忘记登录密码处理方式。"
+  },
+  {
+    "id": "account_abnormal_login_001",
+    "query": "账号异常登录怎么办？",
+    "expected_sources": ["account-security-faq.md"],
+    "expected_sections": ["账号存在异常登录"],
+    "expected_chunk_ids": ["account_security_faq_chunk_0004"],
+    "permission_group": "customer_service",
+    "business_domain": "account",
+    "notes": "应命中账号存在异常登录的处理建议。"
+  },
+  {
+    "id": "ambiguous_quality_shipping_fee_001",
+    "query": "质量问题退货邮费谁出？",
+    "expected_sources": ["refund-return-policy.md"],
+    "expected_sections": ["运费处理"],
+    "expected_chunk_ids": ["refund_return_policy_chunk_0005"],
+    "permission_group": "customer_service",
+    "business_domain": "refund",
+    "notes": "容易混淆质量问题段落和运费处理段落，适合作为 bad case 分析样本。"
+  },
+  {
+    "id": "no_context_membership_points_001",
+    "query": "会员积分怎么兑换？",
+    "expect_no_results": true,
+    "permission_group": "customer_service",
+    "notes": "当前知识库没有会员积分兑换资料，应作为无资料样本。"
+  }
+]

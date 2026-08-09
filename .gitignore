@@ -1,0 +1,61 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Java
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+
+# Node / frontend experiments
+node_modules/
+.next/
+.playwright-cli/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Local data
+data/
+storage/
+tmp/
+temp/
+*.sqlite
+*.db
+
+# Tracked learning sample data
+!projects/python-basics/data/
+!projects/python-basics/data/*.json
+!projects/python-basics/data/*.txt
+!projects/ai-service/data/
+!projects/ai-service/data/knowledge_base/
+!projects/ai-service/data/knowledge_base/*.md
+!projects/ai-service/data/knowledge_base/*.txt

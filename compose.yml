@@ -1,0 +1,162 @@
+name: dayun
+
+services:
+  ai-service:
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /workspace
+    command: >
+      sh -lc "uv sync --frozen &&
+      uv run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    env_file:
+      - path: ./projects/ai-service/.env
+        required: false
+    environment:
+      UV_PROJECT_ENVIRONMENT: /tmp/ai-service-venv
+      UV_LINK_MODE: copy
+      TICKET_AGENT_MODEL_MODE: ${TICKET_AGENT_MODEL_MODE:-rule_based}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # 真实 Java 业务服务跑在宿主机 :18004，容器内经 host.docker.internal 访问
+      JAVA_BUSINESS_SERVICE_BASE_URL: http://host.docker.internal:18004
+      QDRANT_BASE_URL: http://qdrant:6333
+      MILVUS_URI: http://milvus-standalone:19530
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+    volumes:
+      - type: bind
+        source: ./projects/ai-service
+        target: /workspace
+      - type: volume
+        source: ai_service_uv_cache
+        target: /root/.cache/uv
+    ports:
+      - "${AI_SERVICE_PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2).read()"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - dayun-net
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.2
+    profiles:
+      - qdrant
+    volumes:
+      - type: volume
+        source: qdrant_storage
+        target: /qdrant/storage
+    ports:
+      - "${QDRANT_HTTP_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    networks:
+      - dayun-net
+
+  milvus-etcd:
+    image: quay.io/coreos/etcd:v3.5.25
+    profiles:
+      - milvus
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    command: >
+      etcd -advertise-client-urls=http://milvus-etcd:2379
+      -listen-client-urls http://0.0.0.0:2379
+      --data-dir /etcd
+    volumes:
+      - type: volume
+        source: milvus_etcd
+        target: /etcd
+    healthcheck:
+      test:
+        - CMD
+        - etcdctl
+        - endpoint
+        - health
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - dayun-net
+
+  milvus-minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    profiles:
+      - milvus
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    command: minio server /minio_data --console-address ":9001"
+    volumes:
+      - type: volume
+        source: milvus_minio
+        target: /minio_data
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test:
+        - CMD
+        - mc
+        - ready
+        - local
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - dayun-net
+
+  milvus-standalone:
+    image: milvusdb/milvus:v3.0-beta
+    profiles:
+      - milvus
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      MINIO_REGION: us-east-1
+      ETCD_ENDPOINTS: milvus-etcd:2379
+      MINIO_ADDRESS: milvus-minio:9000
+    volumes:
+      - type: volume
+        source: milvus_data
+        target: /var/lib/milvus
+    ports:
+      - "${MILVUS_GRPC_PORT:-19530}:19530"
+      - "${MILVUS_WEB_PORT:-9091}:9091"
+    depends_on:
+      milvus-etcd:
+        condition: service_healthy
+      milvus-minio:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9091/healthz
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 90s
+    networks:
+      - dayun-net
+
+networks:
+  dayun-net:
+    driver: bridge
+
+volumes:
+  ai_service_uv_cache:
+  qdrant_storage:
+  milvus_etcd:
+  milvus_minio:
+  milvus_data:

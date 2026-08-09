@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.AiConversationMapper">
+    <resultMap id="AiConversationResultMap" type="com.panpan.aibusinessservice.entity.AiConversation">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="user_id" property="userId"/>
+        <result column="title" property="title"/>
+        <result column="conversation_status" property="conversationStatus"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="upsert">
+        INSERT INTO ai_conversations
+            (tenant_id, conversation_id, user_id, title, conversation_status, created_at, updated_at)
+        VALUES
+            (#{tenantId}, #{conversationId}, #{userId}, #{title}, #{conversationStatus}, #{createdAt}, #{updatedAt})
+        ON DUPLICATE KEY UPDATE
+            title = VALUES(title),
+            conversation_status = VALUES(conversation_status),
+            updated_at = VALUES(updated_at)
+    </insert>
+
+    <select id="listByUser" resultMap="AiConversationResultMap">
+        SELECT * FROM ai_conversations
+        WHERE tenant_id = #{tenantId} AND user_id = #{userId}
+        ORDER BY updated_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="getByConversationId" resultMap="AiConversationResultMap">
+        SELECT * FROM ai_conversations
+        WHERE tenant_id = #{tenantId} AND conversation_id = #{conversationId}
+    </select>
+
+    <delete id="deleteOlderThan">
+        DELETE FROM ai_conversations WHERE updated_at &lt; #{cutoff}
+    </delete>
+</mapper>

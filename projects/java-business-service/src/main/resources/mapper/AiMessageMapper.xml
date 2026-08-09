@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.AiMessageMapper">
+    <resultMap id="AiMessageResultMap" type="com.panpan.aibusinessservice.entity.AiMessage">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="message_id" property="messageId"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="sender_type" property="senderType"/>
+        <result column="content" property="content"/>
+        <result column="trace_id" property="traceId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="batchInsert">
+        INSERT IGNORE INTO ai_messages
+            (tenant_id, message_id, conversation_id, sender_type, content, trace_id, created_at)
+        VALUES
+        <foreach collection="messages" item="m" separator=",">
+            (#{m.tenantId}, #{m.messageId}, #{m.conversationId}, #{m.senderType}, #{m.content}, #{m.traceId}, #{m.createdAt})
+        </foreach>
+    </insert>
+
+    <select id="listByConversation" resultMap="AiMessageResultMap">
+        SELECT * FROM ai_messages
+        WHERE tenant_id = #{tenantId} AND conversation_id = #{conversationId}
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="countByConversation" resultType="int">
+        SELECT COUNT(*) FROM ai_messages
+        WHERE tenant_id = #{tenantId} AND conversation_id = #{conversationId}
+    </select>
+</mapper>

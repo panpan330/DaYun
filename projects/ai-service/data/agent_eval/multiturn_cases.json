@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "description": "Multiturn conversation evaluation cases for the ticket agent",
+  "cases": [
+    {
+      "id": "mt_order_refund_001",
+      "name": "跨轮：查订单后问退款",
+      "conversation": [
+        {
+          "message": "我的订单 202501010001 发货了吗",
+          "expected_intent": "order_query",
+          "expected_route": "query_order",
+          "requires_history": false
+        },
+        {
+          "message": "那我要退款",
+          "expected_intent": "refund_request",
+          "expected_route": "handle_refund_request",
+          "requires_history": true
+        }
+      ],
+      "final_answer": {
+        "expected_intent": "refund_request"
+      }
+    },
+    {
+      "id": "mt_policy_followup_001",
+      "name": "跨轮：问退款政策后追问运费",
+      "conversation": [
+        {
+          "message": "退款政策是什么",
+          "expected_intent": "policy_question",
+          "expected_route": "retrieve_policy",
+          "requires_history": false
+        },
+        {
+          "message": "那退货规则呢",
+          "expected_intent": "policy_question",
+          "expected_route": "retrieve_policy",
+          "requires_history": true
+        }
+      ],
+      "final_answer": {
+        "expected_intent": "policy_question"
+      }
+    },
+    {
+      "id": "mt_ticket_followup_001",
+      "name": "跨轮：报修后查工单",
+      "conversation": [
+        {
+          "message": "我的商品坏了要投诉",
+          "expected_intent": "ticket_request",
+          "expected_route": "decide_ticket_need",
+          "requires_history": false
+        },
+        {
+          "message": "顺便看下我的工单进度",
+          "expected_intent": "ticket_request",
+          "expected_route": "decide_ticket_need",
+          "requires_history": true
+        }
+      ]
+    },
+    {
+      "id": "mt_intent_switch_001",
+      "name": "闲聊后直接问业务",
+      "conversation": [
+        {
+          "message": "你好",
+          "expected_intent": "smalltalk",
+          "expected_route": "build_direct_answer",
+          "requires_history": false
+        },
+        {
+          "message": "我的订单 202501010002 到哪了",
+          "expected_intent": "order_query",
+          "expected_route": "query_order",
+          "requires_history": false
+        }
+      ],
+      "final_answer": {
+        "expected_intent": "order_query"
+      }
+    }
+  ]
+}

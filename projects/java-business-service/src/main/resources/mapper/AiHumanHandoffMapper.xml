@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.AiHumanHandoffMapper">
+
+  <resultMap id="AiHumanHandoffResultMap" type="com.panpan.aibusinessservice.entity.AiHumanHandoff">
+    <id column="id" property="id"/>
+    <result column="conversation_id" property="conversationId"/>
+    <result column="user_id" property="userId"/>
+    <result column="tenant_id" property="tenantId"/>
+    <result column="reason" property="reason"/>
+    <result column="related_order_id" property="relatedOrderId"/>
+    <result column="emotion" property="emotion"/>
+    <result column="status" property="status"/>
+    <result column="assigned_agent" property="assignedAgent"/>
+    <result column="note" property="note"/>
+    <result column="created_at" property="createdAt"/>
+    <result column="updated_at" property="updatedAt"/>
+    <result column="resolved_at" property="resolvedAt"/>
+  </resultMap>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO ai_human_handoffs
+      (conversation_id, user_id, tenant_id, reason, related_order_id, emotion, status, assigned_agent, note, created_at, updated_at, resolved_at)
+    VALUES
+      (#{conversationId}, #{userId}, #{tenantId}, #{reason}, #{relatedOrderId}, #{emotion}, #{status}, #{assignedAgent}, #{note}, #{createdAt}, #{updatedAt}, #{resolvedAt})
+  </insert>
+
+  <select id="findActiveByConversation" resultMap="AiHumanHandoffResultMap">
+    SELECT * FROM ai_human_handoffs
+    WHERE conversation_id = #{conversationId} AND status != 'closed'
+    ORDER BY created_at DESC
+    LIMIT 1
+  </select>
+
+  <select id="findById" resultMap="AiHumanHandoffResultMap">
+    SELECT * FROM ai_human_handoffs WHERE id = #{id}
+  </select>
+
+  <select id="listByStatus" resultMap="AiHumanHandoffResultMap">
+    SELECT * FROM ai_human_handoffs
+    WHERE status = #{status}
+    ORDER BY created_at DESC
+  </select>
+
+  <update id="claim">
+    UPDATE ai_human_handoffs
+    SET status = 'in_progress', assigned_agent = #{agent}, updated_at = #{now}
+    WHERE id = #{id} AND status = 'pending'
+  </update>
+
+  <update id="close">
+    UPDATE ai_human_handoffs
+    SET status = 'closed', assigned_agent = #{agent}, note = #{note}, resolved_at = #{now}, updated_at = #{now}
+    WHERE id = #{id} AND status = 'in_progress'
+  </update>
+
+  <update id="transfer">
+    UPDATE ai_human_handoffs
+    SET assigned_agent = #{targetAgent}, note = #{note}, updated_at = #{now}
+    WHERE id = #{id} AND status = 'in_progress'
+  </update>
+
+</mapper>

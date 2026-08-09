@@ -1,0 +1,166 @@
+[
+  {
+    "context": {
+      "run_id": "local-agent-eval-latest",
+      "dataset_name": "agent_eval",
+      "dataset_version": "stage6-v1",
+      "candidate_version": "local-working-tree",
+      "baseline_run_id": "agent_eval_stage6_v1_baseline",
+      "model_name": "fake_or_rule_based",
+      "prompt_version": "local",
+      "code_version": "local-working-tree",
+      "evaluator_version": "eval-platform-v1",
+      "notes": "",
+      "started_at": "2026-08-07T06:19:46.274152Z"
+    },
+    "evaluated_check_count": 31,
+    "passed_check_count": 31,
+    "failed_check_count": 0,
+    "passed": true,
+    "metrics": [
+      {
+        "name": "suite_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "check_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "failed_suites",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "failed_checks",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      }
+    ]
+  },
+  {
+    "context": {
+      "run_id": "local-agent-eval-latest",
+      "dataset_name": "agent_eval",
+      "dataset_version": "stage6-v1",
+      "candidate_version": "local-working-tree",
+      "baseline_run_id": "agent_eval_stage6_v1_baseline",
+      "model_name": "fake_or_rule_based",
+      "prompt_version": "local",
+      "code_version": "local-working-tree",
+      "evaluator_version": "eval-platform-v1",
+      "notes": "",
+      "started_at": "2026-08-07T06:20:11.715852Z"
+    },
+    "evaluated_check_count": 31,
+    "passed_check_count": 31,
+    "failed_check_count": 0,
+    "passed": true,
+    "metrics": [
+      {
+        "name": "suite_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "check_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "failed_suites",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "failed_checks",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      }
+    ]
+  },
+  {
+    "context": {
+      "run_id": "local-agent-eval-latest",
+      "dataset_name": "agent_eval",
+      "dataset_version": "stage6-v1",
+      "candidate_version": "local-working-tree",
+      "baseline_run_id": "agent_eval_stage6_v1_baseline",
+      "model_name": "fake_or_rule_based",
+      "prompt_version": "local",
+      "code_version": "local-working-tree",
+      "evaluator_version": "eval-platform-v1",
+      "notes": "",
+      "started_at": "2026-08-07T06:20:23.540896Z"
+    },
+    "evaluated_check_count": 31,
+    "passed_check_count": 31,
+    "failed_check_count": 0,
+    "passed": true,
+    "metrics": [
+      {
+        "name": "suite_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "check_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "failed_suites",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "failed_checks",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      }
+    ]
+  },
+  {
+    "context": {
+      "run_id": "local-agent-eval-latest",
+      "dataset_name": "agent_eval",
+      "dataset_version": "stage6-v1",
+      "candidate_version": "local-working-tree",
+      "baseline_run_id": "agent_eval_stage6_v1_baseline",
+      "model_name": "fake_or_rule_based",
+      "prompt_version": "local",
+      "code_version": "local-working-tree",
+      "evaluator_version": "eval-platform-v1",
+      "notes": "",
+      "started_at": "2026-08-07T06:20:30.957813Z"
+    },
+    "evaluated_check_count": 31,
+    "passed_check_count": 31,
+    "failed_check_count": 0,
+    "passed": true,
+    "metrics": [
+      {
+        "name": "suite_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "check_pass_rate",
+        "value": 1.0,
+        "direction": "higher_is_better"
+      },
+      {
+        "name": "failed_suites",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      },
+      {
+        "name": "failed_checks",
+        "value": 0.0,
+        "direction": "lower_is_better"
+      }
+    ]
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "registry_version": "stage10-v1",
+  "datasets": [
+    {
+      "name": "agent_eval",
+      "version": "stage6-v1",
+      "task_type": "agent",
+      "cases_path": "data/agent_eval/agent_cases.json",
+      "description": "Curated local Agent evaluation dataset covering intent, fields, route, RAG behavior, tool use, confirmation, and regression cases.",
+      "frozen": true,
+      "baseline_run_id": "agent_eval_stage6_v1_baseline",
+      "tags": ["agent", "regression", "local", "fake"]
+    },
+    {
+      "name": "rag_retrieval_eval",
+      "version": "stage9-v1",
+      "task_type": "rag_retrieval",
+      "cases_path": "data/rag_eval/retrieval_cases.json",
+      "description": "Local RAG retrieval evaluation dataset for Hit Rate@K, Recall@K, Precision@K, MRR@K, and retrieval bad cases.",
+      "frozen": true,
+      "baseline_run_id": "rag_retrieval_stage9_v1_baseline",
+      "tags": ["rag", "retrieval", "regression", "local", "fake"]
+    },
+    {
+      "name": "rag_answer_eval",
+      "version": "stage9-v1",
+      "task_type": "rag_answer",
+      "cases_path": "data/rag_eval/rag_cases.json",
+      "description": "Local RAG answer-quality evaluation dataset covering answer behavior, citations, no-context refusal, access denial, and security blocking.",
+      "frozen": true,
+      "baseline_run_id": "rag_answer_stage9_v1_baseline",
+      "tags": ["rag", "answer", "citation", "security", "regression", "local", "fake"]
+    }
+  ]
+}

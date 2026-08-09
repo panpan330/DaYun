@@ -1,0 +1,100 @@
+{
+  "contract_version": "stage7-11",
+  "common_headers": {
+    "X-Trace-Id": "trace-contract-stage7-11",
+    "X-Caller": "ai-service",
+    "X-User-Id": "U1001",
+    "X-Tenant-Id": "default",
+    "X-Internal-Token": "local-dev-internal-token"
+  },
+  "cases": [
+    {
+      "id": "query_order_success",
+      "operation": "query_order",
+      "method": "GET",
+      "path": "/internal/orders/A1001",
+      "expected": {
+        "status": 200,
+        "success": true,
+        "code": "OK",
+        "required_response_fields": ["success", "code", "message", "data", "trace_id"],
+        "required_data_fields": [
+          "order_id",
+          "order_status",
+          "payment_status",
+          "logistics_message",
+          "latest_event",
+          "can_create_ticket",
+          "user_visible_summary"
+        ]
+      }
+    },
+    {
+      "id": "query_order_access_denied",
+      "operation": "query_order",
+      "method": "GET",
+      "path": "/internal/orders/A2001",
+      "expected": {
+        "status": 403,
+        "success": false,
+        "code": "ORDER_ACCESS_DENIED",
+        "python_error_code": "ORDER_ACCESS_DENIED",
+        "python_status": 403
+      }
+    },
+    {
+      "id": "create_ticket_success",
+      "operation": "ticket_creation",
+      "method": "POST",
+      "path": "/internal/tickets",
+      "idempotency_key": "contract-stage7-11-ticket-001",
+      "body": {
+        "title": "物流太慢",
+        "description": "用户反馈 A1001 订单物流长时间未更新，希望客服跟进。",
+        "category": "logistics",
+        "priority": "normal",
+        "related_order_id": "A1001",
+        "source": "ai_agent",
+        "confirmation_id": "9f4d0b2f5b0c4f2a9d6c8b1e0a3f7c11"
+      },
+      "expected": {
+        "status": 201,
+        "success": true,
+        "code": "OK",
+        "required_response_fields": ["success", "code", "message", "data", "trace_id"],
+        "required_data_fields": [
+          "ticket_id",
+          "ticket_status",
+          "title",
+          "category",
+          "priority",
+          "related_order_id",
+          "created_at",
+          "user_visible_summary"
+        ]
+      }
+    },
+    {
+      "id": "create_ticket_missing_idempotency_key",
+      "operation": "ticket_creation",
+      "method": "POST",
+      "path": "/internal/tickets",
+      "body": {
+        "title": "物流太慢",
+        "description": "用户反馈 A1001 订单物流长时间未更新，希望客服跟进。",
+        "category": "logistics",
+        "priority": "normal",
+        "related_order_id": "A1001",
+        "source": "ai_agent",
+        "confirmation_id": "9f4d0b2f5b0c4f2a9d6c8b1e0a3f7c11"
+      },
+      "expected": {
+        "status": 400,
+        "success": false,
+        "code": "IDEMPOTENCY_KEY_REQUIRED",
+        "python_error_code": "TICKET_UPSTREAM_REJECTED",
+        "python_status": 502
+      }
+    }
+  ]
+}

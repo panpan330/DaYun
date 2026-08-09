@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.UserMapper">
+    <resultMap id="UserResultMap" type="com.panpan.aibusinessservice.entity.User">
+        <id column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="display_name" property="displayName"/>
+        <result column="password_hash" property="passwordHash"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectActiveByTenantIdAndUsername" resultMap="UserResultMap">
+        SELECT
+          id,
+          tenant_id,
+          user_id,
+          username,
+          display_name,
+          password_hash,
+          status,
+          created_at,
+          updated_at
+        FROM app_users
+        WHERE tenant_id = #{tenantId}
+          AND username = #{username}
+          AND status = 'active'
+    </select>
+
+    <select id="selectActiveByTenantIdAndUserId" resultMap="UserResultMap">
+        SELECT
+          id,
+          tenant_id,
+          user_id,
+          username,
+          display_name,
+          password_hash,
+          status,
+          created_at,
+          updated_at
+        FROM app_users
+        WHERE tenant_id = #{tenantId}
+          AND user_id = #{userId}
+          AND status = 'active'
+    </select>
+
+    <select id="selectRoleCodesByTenantIdAndUserId" resultType="java.lang.String">
+        SELECT role_code
+        FROM app_user_roles
+        WHERE tenant_id = #{tenantId}
+          AND user_id = #{userId}
+        ORDER BY role_code
+    </select>
+
+    <select id="selectActiveStaffByTenantId" resultMap="UserResultMap">
+        SELECT DISTINCT
+          u.id,
+          u.tenant_id,
+          u.user_id,
+          u.username,
+          u.display_name,
+          u.password_hash,
+          u.status,
+          u.created_at,
+          u.updated_at
+        FROM app_users u
+        INNER JOIN app_user_roles ur
+          ON ur.tenant_id = u.tenant_id
+         AND ur.user_id = u.user_id
+        WHERE u.tenant_id = #{tenantId}
+          AND u.status = 'active'
+          AND ur.role_code IN ('agent', 'supervisor', 'admin')
+        ORDER BY u.user_id ASC
+    </select>
+</mapper>

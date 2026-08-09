@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.panpan.aibusinessservice.mapper.OrderMapper">
+    <resultMap id="OrderResultMap" type="com.panpan.aibusinessservice.entity.Order">
+        <id column="order_id" property="orderId"/>
+        <result column="user_id" property="ownerUserId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="order_status" property="orderStatus"/>
+        <result column="payment_status" property="paymentStatus"/>
+        <result column="logistics_message" property="logisticsMessage"/>
+        <result column="latest_event" property="latestEvent"/>
+        <result column="can_create_ticket" property="canCreateTicket"/>
+        <result column="amount" property="amount"/>
+        <result column="refund_amount" property="refundAmount"/>
+        <result column="refunded_at" property="refundedAt"/>
+        <result column="refund_reason" property="refundReason"/>
+        <result column="canceled_at" property="canceledAt"/>
+        <result column="cancel_reason" property="cancelReason"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="OrderColumns">
+        order_id,
+        user_id,
+        tenant_id,
+        order_status,
+        payment_status,
+        logistics_message,
+        latest_event,
+        can_create_ticket,
+        amount,
+        refund_amount,
+        refunded_at,
+        refund_reason,
+        canceled_at,
+        cancel_reason,
+        created_at,
+        updated_at
+    </sql>
+
+    <select id="selectByTenantIdAndOrderId" resultMap="OrderResultMap">
+        SELECT
+          <include refid="OrderColumns"/>
+        FROM orders
+        WHERE tenant_id = #{tenantId}
+          AND order_id = #{orderId}
+    </select>
+
+    <select id="selectByTenantIdAndUserId" resultMap="OrderResultMap">
+        SELECT
+          <include refid="OrderColumns"/>
+        FROM orders
+        WHERE tenant_id = #{tenantId}
+          AND user_id = #{userId}
+        ORDER BY updated_at DESC, order_id ASC
+    </select>
+
+    <select id="selectAllByTenantId" resultMap="OrderResultMap">
+        SELECT
+          <include refid="OrderColumns"/>
+        FROM orders
+        WHERE tenant_id = #{tenantId}
+        ORDER BY updated_at DESC, order_id ASC
+    </select>
+
+    <update id="updateRefundState">
+        UPDATE orders
+        SET payment_status = #{paymentStatus},
+            refund_amount = #{refundAmount},
+            refunded_at = #{refundedAt},
+            refund_reason = #{refundReason},
+            latest_event = #{latestEvent},
+            updated_at = #{updatedAt}
+        WHERE tenant_id = #{tenantId}
+          AND order_id = #{orderId}
+          AND payment_status != 'refunded'
+          AND order_status != 'canceled'
+    </update>
+
+    <update id="updateCancelState">
+        UPDATE orders
+        SET order_status = #{orderStatus},
+            canceled_at = #{canceledAt},
+            cancel_reason = #{cancelReason},
+            latest_event = #{latestEvent},
+            updated_at = #{updatedAt}
+        WHERE tenant_id = #{tenantId}
+          AND order_id = #{orderId}
+          AND order_status = 'waiting_shipment'
+          AND payment_status != 'refunded'
+    </update>
+
+    <resultMap id="OrderEventResultMap" type="com.panpan.aibusinessservice.entity.OrderEvent">
+        <id column="event_id" property="eventId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="event_type" property="eventType"/>
+        <result column="event_payload" property="eventPayload"/>
+        <result column="operator_type" property="operatorType"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="trace_id" property="traceId"/>
+        <result column="idempotency_key" property="idempotencyKey"/>
+        <result column="request_fingerprint" property="requestFingerprint"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <select id="selectEventByTenantIdAndIdempotencyKey" resultMap="OrderEventResultMap">
+        SELECT
+          event_id,
+          tenant_id,
+          order_id,
+          event_type,
+          event_payload,
+          operator_type,
+          operator_id,
+          trace_id,
+          idempotency_key,
+          request_fingerprint,
+          created_at
+        FROM order_events
+        WHERE tenant_id = #{tenantId}
+          AND idempotency_key = #{idempotencyKey}
+    </select>
+
+    <insert id="insertOrderEvent">
+        INSERT INTO order_events (
+          tenant_id,
+          event_id,
+          order_id,
+          event_type,
+          event_payload,
+          operator_type,
+          operator_id,
+          trace_id,
+          idempotency_key,
+          request_fingerprint,
+          created_at
+        ) VALUES (
+          #{tenantId},
+          #{eventId},
+          #{orderId},
+          #{eventType},
+          #{eventPayload},
+          #{operatorType},
+          #{operatorId},
+          #{traceId},
+          #{idempotencyKey},
+          #{requestFingerprint},
+          #{createdAt}
+        )
+    </insert>
+</mapper>

@@ -57,7 +57,7 @@ POST /internal/tickets 已通过 TicketMapper + TicketMapper.xml 写入 MySQL。
 当前 Redis 接入状态：
 
 ```text
-默认连接 VMware Ubuntu Docker Redis：192.168.88.10:6379。
+默认连接基础设施 Docker Redis（地址见 .env 配置）。
 GET /internal/orders/{order_id} 已接入 Redis read-through cache。
 POST /internal/tickets 已接入 Redis 幂等缓存，但仍以 MySQL 唯一索引兜底。
 internal 工具接口已接入 Redis fixed window 限流。
@@ -95,17 +95,17 @@ $env:JAVA_BUSINESS_INTERNAL_TOKEN = "local-dev-internal-token"
 $env:JAVA_BUSINESS_INTERNAL_ALLOWED_CALLER = "ai-service"
 ```
 
-如果需要启用 Redis，先确认 VMware Ubuntu 虚拟机里的 Redis 容器已启动，并且 Windows 可以连通：
+如果需要启用 Redis，先确认基础设施（虚拟机/远程）里的 Redis 容器已启动，并且 Windows 可以连通：
 
 ```powershell
-Test-NetConnection 192.168.88.10 -Port 6379
+Test-NetConnection <REDIS_HOST> -Port 6379
 ```
 
 Redis 连接配置可以通过环境变量覆盖：
 
 ```powershell
 $env:JAVA_BUSINESS_REDIS_ENABLED = "true"
-$env:JAVA_BUSINESS_REDIS_HOST = "192.168.88.10"
+$env:JAVA_BUSINESS_REDIS_HOST = "<REDIS_HOST>"
 $env:JAVA_BUSINESS_REDIS_PORT = "6379"
 ```
 
@@ -139,7 +139,7 @@ mvn test
 ```
 
 测试环境使用 H2 内存数据库，但仍然走 `OrderMapper`、`TicketMapper` 和 MyBatis XML 链路。
-测试环境默认关闭真实 Redis，使用 NoOp cache / NoOp rate limiter，避免 `mvn test` 依赖 VMware 虚拟机。
+测试环境默认关闭真实 Redis，使用 NoOp cache / NoOp rate limiter，避免 `mvn test` 依赖外部基础设施。
 
 ## 当前 internal 接口
 

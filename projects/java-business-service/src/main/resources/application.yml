@@ -17,7 +17,7 @@ spring:
     password: ${JAVA_BUSINESS_DB_PASSWORD:root}
   data:
     redis:
-      host: ${JAVA_BUSINESS_REDIS_HOST:192.168.88.10}
+      host: ${JAVA_BUSINESS_REDIS_HOST:localhost}
       port: ${JAVA_BUSINESS_REDIS_PORT:6379}
       timeout: 2s
   sql:

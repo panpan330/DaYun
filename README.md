@@ -15,6 +15,22 @@
 - **业务服务**（Java / Spring Boot）：订单、工单、用户、知识库元数据、转人工队列、会话持久化、成本统计
 - **前端**（Vue 3 / Element Plus）：客户对话页 + 坐席工作台（工单/转人工/接管/成本与运营看板）
 
+<details>
+<summary>📑 目录</summary>
+
+- [功能亮点](#-功能亮点)
+- [快速开始](#-快速开始)
+- [配置](#配置)
+- [架构](#架构)
+- [设计取舍](#设计取舍)
+- [测试](#测试)
+- [API 概览](#主要-api-概览)
+- [FAQ](#faq)
+- [Roadmap](#roadmap)
+- [致谢](#致谢)
+
+</details>
+
 ## ✨ 功能亮点
 
 | 模块 | 能力 | 亮点 |
@@ -26,6 +42,18 @@
 | 🧑‍💼 **坐席协作** | 转人工队列、接管会话、坐席转移、LLM 会话摘要、人工回复回写 | 接管期间 AI 自动让位；转移/关闭全审计（note + resolved_at） |
 | 📊 **运营分析** | 满意度、转人工量、情绪分布、每日对话量、LLM 成本、评估快照 | 多模型成本按意图聚合；RAG 检索质量（Hit@K/MRR）落库可视化 |
 | 🔧 **工程化** | 1900+ 测试（TDD）、自建 pytest e2e 框架、可观测性 | OTel 链路追踪、限流/幂等/安全边界、Prompt 注入防护、`/health/dependencies` 依赖体检 |
+
+## 🖥️ 演示效果
+
+> 以下截图待补（本地起三服务后截取界面，放入 `assets/` 并在此引用，推荐 GIF 展示流式回复）：
+
+| 界面 | 内容 |
+| --- | --- |
+| 客户对话页 | 多 Agent 流式回复、工单确认单、情绪转人工提示 |
+| 坐席工作台 | 转人工队列、接管会话、坐席转移、会话摘要 |
+| 运营看板 | 满意度 / 转人工量 / 情绪分布 / 每日对话量 / LLM 成本 / 评估快照 |
+
+**快速体验**：启动后打开 `http://localhost:5173`，用客户账号 `U1001` 提问，按下方「演示流程」四条路径走一遍即可看到完整闭环。
 
 ## 架构
 
@@ -62,6 +90,25 @@ flowchart LR
 ```
 
 **数据流**：客户消息 → Supervisor 意图路由 → Worker 执行（查订单 / RAG 问答 / 建工单前先要用户确认）→ 情绪识别（愤怒/急切 → 自动转人工）→ 会话异步落库 MySQL；坐席在工作台认领转人工会话 → AI 停止应答 → 坐席回复直接回写客户会话 → 关闭后恢复 AI。
+
+## 设计取舍
+
+### 为什么用多 Agent 分工，而不是单一大模型一把梭？
+
+| 关注点 | 单 Agent（一次大模型调用） | 本项目多 Agent 分工 |
+| --- | --- | --- |
+| 意图识别 | 依赖模型自由发挥，不可控 | 专用意图分类节点 + 规则 ⇄ LLM 双路径，路由失败自动降级 |
+| 业务动作 | 模型直接编工具调用 | 先分派（查订单/建工单/退款/取消）再执行，**写操作必须用户确认** |
+| 知识问答 | 全量上下文塞给模型 | 按知识库路由（政策/物流/账户）+ 权限过滤后再检索 |
+| 成本 | 每轮全量消耗 | 按意图只调必要 Worker，成本按模型/意图聚合可观测 |
+| 可靠性 | 单点失败即崩 | Worker 子图隔离 + 情绪转人工兜底，人工可随时接管 |
+
+**关键取舍**：
+
+- **写操作先确认后执行**：工单/退款/取消的字段由 LLM 提取后**回显确认单**，用户批准才幂等落库——防止模型幻觉直接产生业务副作用。
+- **规则 ⇄ LLM ⇄ fake 三路径**：未配置 API Key 时全链路可用（规则分类 + fake embedding），CI 与演示零外部依赖。
+- **情绪识别独立成节点**：愤怒/急切/焦虑在对话链路中被显式识别并触发转人工，而不是让模型"顺便"判断。
+- **会话双写**：Redis（实时，TTL 30 天）+ 异步批刷 MySQL（持久），Redis 丢失可从 MySQL 回源重建。
 
 ## 快速开始
 
@@ -116,6 +163,26 @@ cd projects/ai-service && uv run pytest tests/e2e -m e2e --run-e2e
 ```
 
 **开发默认账号**：客户 `U1001` / 坐席 `A1001` / 主管 `S1001`（见 `application.yml` 与前端登录页，开发环境专用）。
+
+## 配置
+
+**AI 服务**（`projects/ai-service/.env`，模板见 `.env.example`）：
+
+| 变量 | 必填 | 说明 | 默认/示例 |
+| --- | --- | --- | --- |
+| `LLM_API_KEY` | 否* | 模型 Key；留空自动走 rule_based/fake 模式 | 空 |
+| `LLM_PROVIDER` / `LLM_MODEL` | 否* | 兼容 OpenAI 协议的供应商与模型 | `aliyun-compatible` / `qwen3.7-plus` |
+| `LLM_BASE_URL` | 否* | 模型端点 | 阿里云 MaaS 兼容端点 |
+| `AGENT_REDIS_URL` | 是 | 会话/缓存/限流/幂等 Redis | `redis://127.0.0.1:6379/0` |
+| `QDRANT_BASE_URL` | 是 | 向量检索服务 | `http://127.0.0.1:6333` |
+| `JAVA_BUSINESS_SERVICE_BASE_URL` | 是 | Java 业务服务地址 | `http://127.0.0.1:18004` |
+| `JAVA_BUSINESS_INTERNAL_TOKEN` | 是 | internal 接口令牌（开发默认值） | `local-dev-internal-token` |
+
+\* 演示默认允许留空；**生产必须配置真实模型与密钥**。
+
+**业务服务**（环境变量，见 `application.yml`）：`JAVA_BUSINESS_DB_URL` / `JAVA_BUSINESS_DB_USERNAME` / `JAVA_BUSINESS_DB_PASSWORD`、`JAVA_BUSINESS_REDIS_HOST` / `JAVA_BUSINESS_REDIS_PORT`、`JAVA_BUSINESS_INTERNAL_TOKEN`。
+
+**前端**（`projects/customer-service-console/.env`）：`VITE_AI_API_BASE_URL`（默认 `http://127.0.0.1:8000`）、`VITE_JAVA_API_BASE_URL`（默认 `http://127.0.0.1:18004`）。
 
 ## 主要 API 概览
 
@@ -202,6 +269,25 @@ Redis 实时缓存（TTL 30 天）+ 异步批刷 MySQL（`ai_conversations` / `a
 ## 项目背景
 
 本项目是**端到端 AI 客服系统的工程实践**：从零实现多 Agent 图编排、RAG 混合检索、工具调用安全边界、人工接管闭环、自动化评测与可观测性，覆盖"AI 能力 + 真实业务 + 运营分析"完整链路。所有功能均有测试支撑，适合作为学习多 Agent / RAG / 客服系统的参考实现。
+
+## Roadmap
+
+- [x] 多 Agent 对话编排（Supervisor + Worker 子图 + 情绪转人工）
+- [x] RAG 混合检索（关键词 + 向量 + Rerank + 权限过滤 + 引用）
+- [x] 工单 / 退款 / 取消自动化（确认 + 幂等）
+- [x] 转人工闭环（队列 → 接管 → 转移 → 关闭 → 恢复 AI）
+- [x] 会话持久化（Redis + MySQL 双写 + 回源）
+- [x] 成本统计 + 运营看板 + 评估快照
+- [x] 自建 e2e 测试框架（自动起停三服务）
+- [ ] Docker Compose 一键编排三服务 + 依赖（规划中）
+- [ ] 多租户隔离与生产级鉴权（OAuth / JWT）
+- [ ] 语音 / 多模态客服入口
+
+> **现状声明**：本项目为演示/学习级实现。已内置限流、幂等、Prompt 注入防护、权限过滤与安全边界，但**生产部署仍需补充**：正式鉴权、密钥管理、HTTPS、备份与监控告警。
+
+## 致谢
+
+构建在以下优秀开源项目之上：**FastAPI**、**LangGraph / LangChain**、**Qdrant**、**Spring Boot**、**MyBatis**、**Vue 3**、**Element Plus**、**OpenTelemetry**、**pytest**。
 
 ## License
 

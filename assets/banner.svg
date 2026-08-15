@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="55%" stop-color="#16213e"/>
+      <stop offset="100%" stop-color="#0f3460"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e94560"/>
+      <stop offset="100%" stop-color="#ff7eb3"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="360" fill="url(#bg)"/>
+  <circle cx="1120" cy="60" r="180" fill="#e94560" opacity="0.08"/>
+  <circle cx="160" cy="320" r="220" fill="#53a8ff" opacity="0.06"/>
+  <text x="80" y="150" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="64" font-weight="bold" fill="#ffffff">答云 DaYun</text>
+  <text x="82" y="196" font-family="'Segoe UI',sans-serif" font-size="26" fill="#a8b7d0">Multi-Agent Customer Service &amp; Ticket Platform</text>
+  <rect x="80" y="222" width="520" height="4" rx="2" fill="url(#accent)"/>
+  <g font-family="'Segoe UI','PingFang SC',sans-serif" font-size="17">
+    <rect x="80" y="252" width="150" height="38" rx="19" fill="#e94560" opacity="0.9"/>
+    <text x="155" y="277" text-anchor="middle" fill="#ffffff">Multi-Agent</text>
+    <rect x="244" y="252" width="120" height="38" rx="19" fill="#2a5d9e"/>
+    <text x="304" y="277" text-anchor="middle" fill="#ffffff">LangGraph</text>
+    <rect x="378" y="252" width="110" height="38" rx="19" fill="#2a7a5d"/>
+    <text x="433" y="277" text-anchor="middle" fill="#ffffff">RAG</text>
+    <rect x="502" y="252" width="130" height="38" rx="19" fill="#7a4fa0"/>
+    <text x="567" y="277" text-anchor="middle" fill="#ffffff">Spring Boot</text>
+    <rect x="646" y="252" width="110" height="38" rx="19" fill="#3a8f6e"/>
+    <text x="701" y="277" text-anchor="middle" fill="#ffffff">Vue 3</text>
+    <rect x="770" y="252" width="130" height="38" rx="19" fill="#a0653a"/>
+    <text x="835" y="277" text-anchor="middle" fill="#ffffff">Human-in-loop</text>
+  </g>
+  <text x="80" y="330" font-family="'Segoe UI',sans-serif" font-size="15" fill="#6f83a8">意图路由 · 知识问答 · 工单自动化 · 情绪转人工 · 坐席协作 · 成本可观测</text>
+</svg>

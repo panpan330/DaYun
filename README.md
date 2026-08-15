@@ -2,6 +2,8 @@
 
 > Smart Customer Service & Ticket Collaboration Platform
 
+![答云 DaYun](assets/banner.svg)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](projects/ai-service)
 [![Java 21](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)](projects/java-business-service)
@@ -46,13 +48,21 @@
 
 ## 🖥️ 演示效果
 
-> 以下截图待补（本地起三服务后截取界面，放入 `assets/` 并在此引用，推荐 GIF 展示流式回复）：
+**客户对话页**：多 Agent 流式回复、跨会话记忆注入（上次会话说"孩子上小学"，本次回答自动带上称呼与背景）、思考过程时间线、工单确认单。
 
-| 界面 | 内容 |
-| --- | --- |
-| 客户对话页 | 多 Agent 流式回复、工单确认单、情绪转人工提示 |
-| 坐席工作台 | 转人工队列、接管会话、坐席转移、会话摘要 |
-| 运营看板 | 满意度 / 转人工量 / 情绪分布 / 每日对话量 / LLM 成本 / 评估快照 |
+![客户对话页](assets/ai-chat.png)
+
+**坐席工作台**：工单队列 + 转人工队列（接管/转移/关闭/人工回复）。
+
+![坐席工作台](assets/workbench.png)
+
+**运营看板**：满意度、转人工量、情绪分布、每日对话量、LLM 成本（按模型/意图聚合）、依赖健康检查。
+
+![运营看板](assets/dashboard.png)
+
+**AI 评测页**：评测趋势、RAG 检索质量（Hit@K / Recall@K / MRR）、Bad Case 登记与回归。
+
+![AI 评测页](assets/evaluation.png)
 
 **快速体验**：启动后打开 `http://localhost:5173`，用客户账号 `U1001` 提问，按下方「演示流程」四条路径走一遍即可看到完整闭环。
 

@@ -128,6 +128,63 @@ def build_agent_progress_event(node_name: str) -> dict[str, str] | None:
     return {"stage": stage, "label": label}
 
 
+def build_agent_detail_events(
+    node_name: str,
+    node_update: dict,
+    settings,
+) -> list[dict]:
+    """Emit retrieval/tool/model detail events from node updates; empty when no detail."""
+    if not getattr(settings, "agent_detail_events_enabled", False):
+        return []
+    events: list[dict] = []
+    if node_name == "retrieve_policy":
+        citations = node_update.get("rag_citations") or []
+        if citations:
+            events.append(
+                {
+                    "event": "detail",
+                    "data": {
+                        "kind": "retrieval",
+                        "kb": str(citations[0].get("source", "知识库")),
+                        "hits": len(citations),
+                    },
+                }
+            )
+    elif node_name in (
+        "query_order",
+        "handle_refund_request",
+        "handle_cancel_request",
+        "create_ticket",
+    ):
+        order_id = node_update.get("order_query_order_id") or node_update.get("order_id")
+        if order_id:
+            events.append(
+                {
+                    "event": "detail",
+                    "data": {
+                        "kind": "tool",
+                        "tool": node_name,
+                        "order_id": str(order_id),
+                    },
+                }
+            )
+    elif node_name in (
+        "build_direct_answer",
+        "build_unsupported_answer",
+        "build_grounded_answer",
+    ):
+        events.append(
+            {
+                "event": "detail",
+                "data": {
+                    "kind": "model",
+                    "model": getattr(settings, "resolved_llm_model", "unknown"),
+                },
+            }
+        )
+    return events
+
+
 class ConsoleAgentActorResolver(Protocol):
     def resolve(self, authorization: str | None) -> ConsoleAgentActor:
         """Resolve the caller from the Java business service authentication boundary."""
@@ -246,11 +303,13 @@ class ProductionPolicyRagService:
         query: str,
         *,
         access_scope: RagAccessScope | None = None,
+        memory_context: list[str] | None = None,
     ) -> RagAnswer:
         return enhanced_rag_answer(
             query,
             settings=self.settings,
             access_scope=access_scope,
+            memory_context=memory_context,
         )
 
 
@@ -492,6 +551,7 @@ class ConsoleAgentService:
                     history=history,
                     actor_roles=actor.roles,
                     actor_tenant_id=actor.tenant_id,
+                    memory_context=self._load_user_memory(actor),
                 )
             finally:
                 _reset_request_context(tokens)
@@ -502,6 +562,7 @@ class ConsoleAgentService:
             user_message=message,
             response=response,
         )
+        self._maybe_extract_user_memory(actor, conversation_id, message)
         return response
 
     def stream_reply(
@@ -564,7 +625,10 @@ class ConsoleAgentService:
                     tenant_id=actor.tenant_id,
                 )
                 for update in self.graph.stream(
-                    build_ticket_agent_input(message) | {
+                    build_ticket_agent_input(
+                        message, memory_context=self._load_user_memory(actor)
+                    )
+                    | {
                         "ticket_actor_id": actor.user_id,
                         "actor_roles": actor.roles,
                         "actor_tenant_id": actor.tenant_id,
@@ -578,6 +642,10 @@ class ConsoleAgentService:
                         progress_event = build_agent_progress_event(node_name)
                         if progress_event is not None:
                             yield {"event": "stage", "data": progress_event}
+                        for detail_event in build_agent_detail_events(
+                            node_name, node_update, self.settings
+                        ):
+                            yield detail_event
 
                 snapshot = self.graph.get_state(build_ticket_agent_thread_config(thread_id))
                 state = dict(snapshot.values)
@@ -620,6 +688,7 @@ class ConsoleAgentService:
             user_message=message,
             response=response,
         )
+        self._maybe_extract_user_memory(actor, conversation_id, message)
         yield {"event": "result", "data": response.model_dump(mode="json")}
         yield {"event": "done", "data": {"trace_id": trace_id}}
 
@@ -1149,6 +1218,50 @@ class ConsoleAgentService:
             reason="订单信息暂时无法可靠处理，建议由人工客服继续跟进。",
             related_order_id=str(order_id) if isinstance(order_id, str) and order_id.strip() else None,
         )
+
+    def _load_user_memory(self, actor: ConsoleAgentActor) -> list[str] | None:
+        if not self.settings.agent_memory_enabled:
+            return None
+        try:
+            from app.services.user_memory import UserMemoryStore
+
+            facts = UserMemoryStore(settings=self.settings).get_facts(actor)
+            return [item["fact"] for item in facts] or None
+        except Exception:
+            return None
+
+    def _maybe_extract_user_memory(
+        self,
+        actor: ConsoleAgentActor,
+        conversation_id: str,
+        user_message: str,
+    ) -> None:
+        if not self.settings.agent_memory_enabled:
+            return
+        try:
+            from app.services.user_memory import (
+                UserMemoryStore,
+                extract_user_facts,
+                extract_user_facts_llm,
+            )
+
+            store = UserMemoryStore(
+                ttl_seconds=self.settings.agent_memory_ttl_minutes * 60,
+                settings=self.settings,
+            )
+            facts = extract_user_facts(user_message, conversation_id)
+            facts += extract_user_facts_llm(
+                user_message,
+                conversation_id,
+                self.settings,
+            )
+            if facts:
+                store.store_facts(actor, facts)
+        except Exception:
+            logger.warning(
+                "console_agent_user_memory_extract_failed conversation_id=%s",
+                conversation_id,
+            )
 
     def _record_exchange(
         self,

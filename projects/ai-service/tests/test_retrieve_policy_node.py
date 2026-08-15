@@ -7,7 +7,7 @@ class RecordingRagService:
         self.scope = None
         self.calls = 0
 
-    def answer_policy_question(self, query, *, access_scope=None):
+    def answer_policy_question(self, query, *, access_scope=None, memory_context=None):
         self.calls += 1
         self.scope = access_scope
         return RagAnswer(answer="ok", status=RagAnswerStatus.ANSWERED)

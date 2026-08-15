@@ -24,6 +24,7 @@ class FakeRagAnswerService:
         query: str,
         *,
         chunks: Sequence[RetrievedChunk],
+        memory_context: list[str] | None = None,
     ):
         self.calls.append({"query": query, "chunks": list(chunks)})
         return build_grounded_rag_answer("订单通常会在付款后 24 小时内发货。", chunks)

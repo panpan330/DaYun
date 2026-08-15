@@ -205,11 +205,18 @@ def build_rag_user_prompt(query: str, chunks: Sequence[RetrievedChunk]) -> str:
 def build_rag_messages(
     query: str,
     chunks: Sequence[RetrievedChunk],
+    *,
+    memory_context: list[str] | None = None,
 ) -> list[dict[str, str]]:
+    memory_section = ""
+    if memory_context:
+        memory_section = (
+            "\n\n用户已知信息：\n" + "\n".join(f"- {m}" for m in memory_context)
+        )
     return [
         {
             "role": "system",
-            "content": RAG_SYSTEM_PROMPT,
+            "content": RAG_SYSTEM_PROMPT + memory_section,
         },
         {
             "role": "user",
@@ -284,6 +291,7 @@ class RagAnswerService:
         query: str,
         *,
         chunks: Sequence[RetrievedChunk],
+        memory_context: list[str] | None = None,
     ) -> str:
         normalized_query = query.strip()
         if not normalized_query:
@@ -300,7 +308,7 @@ class RagAnswerService:
                 status_code=500,
             )
 
-        messages = build_rag_messages(normalized_query, chunks)
+        messages = build_rag_messages(normalized_query, chunks, memory_context=memory_context)
         start_time = perf_counter()
         try:
             from app.agents.tracing_spans import set_span_attributes, start_llm_span
@@ -345,6 +353,7 @@ class RagAnswerService:
         query: str,
         *,
         chunks: Sequence[RetrievedChunk],
+        memory_context: list[str] | None = None,
     ) -> RagAnswer:
         normalized_query = query.strip()
         if not normalized_query:
@@ -354,7 +363,9 @@ class RagAnswerService:
             self._log_no_context()
             return build_no_context_rag_answer()
 
-        answer = self.generate_answer(normalized_query, chunks=chunks)
+        answer = self.generate_answer(
+            normalized_query, chunks=chunks, memory_context=memory_context
+        )
         return build_grounded_rag_answer(answer, chunks)
 
 

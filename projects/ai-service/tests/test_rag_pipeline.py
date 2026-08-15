@@ -42,7 +42,7 @@ def test_default_path_retrieves_and_generates(monkeypatch) -> None:
     monkeypatch.setattr(
         pipeline_module,
         "create_rag_answer_service",
-        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks: (_fake_rag_answer())})(),
+        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks, **kwargs: (_fake_rag_answer())})(),
     )
     result = pipeline_module.enhanced_rag_answer("退款政策是什么", settings=settings)
     assert result is not None
@@ -72,7 +72,7 @@ def test_rewrite_enabled_calls_rewriter(monkeypatch) -> None:
     monkeypatch.setattr(
         pipe,
         "create_rag_answer_service",
-        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks: (_fake_rag_answer())})(),
+        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks, **kwargs: (_fake_rag_answer())})(),
     )
     pipe.enhanced_rag_answer("运费谁出", settings=settings)
     assert rewritten["value"] == "运费谁出"  # rewriter 收到原问
@@ -109,7 +109,7 @@ def test_routing_enabled_selects_collection(monkeypatch) -> None:
     monkeypatch.setattr(
         pipe,
         "create_rag_answer_service",
-        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks: (_fake_rag_answer())})(),
+        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks, **kwargs: (_fake_rag_answer())})(),
     )
     pipe.enhanced_rag_answer("退款政策是什么", settings=settings)
     assert captured.get("collection_name") == "kb_customer_policy"
@@ -123,7 +123,7 @@ def test_hybrid_enabled_calls_hybrid(monkeypatch) -> None:
     monkeypatch.setattr(
         pipeline_module,
         "create_rag_answer_service",
-        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks: (_fake_rag_answer())})(),
+        lambda s: type("Svc", (), {"generate_answer_with_citations": lambda self, q, chunks, **kwargs: (_fake_rag_answer())})(),
     )
     pipeline_module.enhanced_rag_answer("退款政策是什么", settings=settings)
     assert called["hybrid"] is True
@@ -224,7 +224,7 @@ def test_context_compression_enabled_uses_compressed_chunks(monkeypatch) -> None
         lambda s: type(
             "Svc",
             (),
-            {"generate_answer_with_citations": lambda self, q, chunks: captured.__setitem__("n_out", len(chunks)) or (_fake_rag_answer())},
+            {"generate_answer_with_citations": lambda self, q, chunks, **kwargs: captured.__setitem__("n_out", len(chunks)) or (_fake_rag_answer())},
         )(),
     )
     pipe.enhanced_rag_answer("退款政策", settings=settings)
@@ -263,7 +263,7 @@ def test_routing_no_access_short_circuits_with_permission_denied(monkeypatch) ->
         lambda s: type(
             "Svc",
             (),
-            {"generate_answer_with_citations": lambda self, q, chunks: (_fake_rag_answer())},
+            {"generate_answer_with_citations": lambda self, q, chunks, **kwargs: (_fake_rag_answer())},
         )(),
     )
 
@@ -308,7 +308,7 @@ def test_routing_no_access_without_permission_warning_keeps_old_path(monkeypatch
         lambda s: type(
             "Svc",
             (),
-            {"generate_answer_with_citations": lambda self, q, chunks: (_fake_rag_answer())},
+            {"generate_answer_with_citations": lambda self, q, chunks, **kwargs: (_fake_rag_answer())},
         )(),
     )
 

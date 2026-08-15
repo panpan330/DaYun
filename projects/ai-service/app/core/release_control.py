@@ -126,7 +126,7 @@ def build_default_rollout_policies() -> list[RolloutPolicy]:
             name="llm-balanced-model-canary",
             target="model",
             status="internal",
-            stable_version="qwen3.7-plus",
+            stable_version="qwen3.7-max",
             candidate_version="next-balanced-model",
             rollout_percentage=0,
             enabled_tenant_tiers=["internal"],

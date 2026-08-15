@@ -24,6 +24,12 @@ import type {
   RagCitation,
 } from '../services/aiChatApi'
 import { useSessionStore } from '../stores/session'
+import { aiApi } from '../services/http'
+
+interface TraceStep {
+  label: string
+  detail?: string
+}
 
 interface ChatMessage {
   id: string
@@ -44,6 +50,10 @@ const input = ref('A1001 的物流一直没有更新，我想投诉并让客服�
 const sessionStore = useSessionStore()
 const loading = ref(false)
 const agentActivity = ref<ConsoleAgentStreamStage>()
+
+const traceSteps = ref<TraceStep[]>([])
+const memoryFacts = ref<string[]>([])
+const memoryOpen = ref(false)
 const confirmationSubmitting = ref(false)
 const editingConfirmationMessageId = ref<string>()
 const correctionFields = ref<ConsoleAgentTicketFields>()
@@ -64,7 +74,28 @@ const messages = ref<ChatMessage[]>([
 
 onMounted(() => {
   void restoreConversation()
+  void loadMemory()
 })
+
+async function loadMemory() {
+  try {
+    const resp = await aiApi.get('/api/ai/agent/memory')
+    memoryFacts.value = ((resp.data?.facts ?? []) as { fact: string }[]).map(
+      (f) => f.fact,
+    )
+  } catch {
+    memoryFacts.value = []
+  }
+}
+
+async function clearMemory() {
+  try {
+    await aiApi.delete('/api/ai/agent/memory')
+    memoryFacts.value = []
+  } catch {
+    ElMessage.error('清空记忆失败')
+  }
+}
 
 async function sendMessage() {
   const message = input.value.trim()
@@ -80,6 +111,7 @@ async function sendMessage() {
   input.value = ''
   loading.value = true
   agentActivity.value = { stage: 'preparing', label: '正在准备本次请求' }
+  traceSteps.value = []
 
   try {
     appendAgentResponse(
@@ -90,6 +122,18 @@ async function sendMessage() {
         },
         (stage) => {
           agentActivity.value = stage
+          traceSteps.value.push({ label: stage.label })
+        },
+        (detail) => {
+          const last = traceSteps.value[traceSteps.value.length - 1]
+          if (!last) return
+          if (detail.kind === 'retrieval') {
+            last.detail = `📚 ${detail.kb ?? '知识库'}（命中 ${detail.hits ?? 0} 条）`
+          } else if (detail.kind === 'tool') {
+            last.detail = `🔧 ${detail.tool ?? ''}（${detail.order_id ?? ''}）`
+          } else if (detail.kind === 'model') {
+            last.detail = `🧠 ${detail.model ?? ''}`
+          }
         },
       ),
     )
@@ -652,6 +696,33 @@ function confirmationConfirmLabel(confirmation?: ConsoleAgentTicketConfirmation)
           <el-icon class="is-loading"><Loading /></el-icon>
           <span>{{ agentActivity.label }}</span>
         </div>
+        <el-collapse v-if="traceSteps.length > 0" class="trace-panel">
+          <el-collapse-item title="🤖 思考过程" name="trace">
+            <div v-for="(step, i) in traceSteps" :key="i" class="trace-step">
+              <span>{{ step.label }}</span>
+              <span v-if="step.detail" class="trace-detail">{{ step.detail }}</span>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+        <el-collapse v-model="memoryOpen" class="memory-panel">
+          <el-collapse-item title="🧠 用户记忆" name="memory">
+            <el-empty
+              v-if="memoryFacts.length === 0"
+              description="暂无记忆"
+              :image-size="48"
+            />
+            <div v-for="(fact, i) in memoryFacts" :key="i" class="memory-fact">
+              {{ fact }}
+            </div>
+            <el-button
+              v-if="memoryFacts.length > 0"
+              size="small"
+              @click="clearMemory"
+            >
+              清空记忆
+            </el-button>
+          </el-collapse-item>
+        </el-collapse>
       </div>
 
       <div class="chat-input">
@@ -728,6 +799,11 @@ function confirmationConfirmLabel(confirmation?: ConsoleAgentTicketConfirmation)
 .message-text { margin: 0; white-space: pre-wrap; line-height: 1.65; }
 .agent-confirmation, .citation-list, .suggestion-list { display: grid; gap: 8px; margin-top: 12px; }
 .agent-activity { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--el-color-primary); font-size: 13px; }
+.trace-panel { margin-top: 12px; }
+.trace-step { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; }
+.trace-detail { color: var(--el-text-color-secondary); white-space: nowrap; }
+.memory-panel { margin-top: 12px; }
+.memory-fact { padding: 4px 0; font-size: 13px; color: var(--el-text-color-regular); }
 .agent-confirmation { border-top: 1px solid var(--el-border-color); padding-top: 12px; }
 .agent-confirmation p { margin: 0; color: var(--el-text-color-regular); }
 .correction-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }

@@ -275,6 +275,7 @@ def build_ticket_intent_classification_messages(
     *,
     prompt_spec: TicketAgentPromptSpec = TICKET_INTENT_CLASSIFICATION_PROMPT,
     history: list[str] | None = None,
+    memory_context: list[str] | None = None,
 ) -> list[dict[str, str]]:
     schema_text = json.dumps(
         get_ticket_intent_classification_json_schema(),
@@ -284,6 +285,9 @@ def build_ticket_intent_classification_messages(
     history_section = ""
     if history:
         history_section = "最近对话：\n" + "\n".join(history) + "\n\n"
+    memory_section = ""
+    if memory_context:
+        memory_section = "用户已知信息：\n" + "\n".join(f"- {m}" for m in memory_context) + "\n\n"
     return [
         {
             "role": "system",
@@ -294,7 +298,7 @@ def build_ticket_intent_classification_messages(
             "content": (
                 "请把下面的用户消息分类成 JSON。\n"
                 f"JSON Schema:\n{schema_text}\n\n"
-                f"{history_section}用户消息:\n{user_message}"
+                f"{history_section}{memory_section}用户消息:\n{user_message}"
             ),
         },
     ]
@@ -506,6 +510,10 @@ def build_ticket_field_extraction_messages(
         separators=(",", ":"),
     )
     normalized_message = state.get("normalized_message", "").strip()
+    memory_context = state.get("memory_context") or []
+    memory_section = ""
+    if memory_context:
+        memory_section = "用户已知信息：\n" + "\n".join(f"- {m}" for m in memory_context) + "\n\n"
 
     return [
         {
@@ -518,7 +526,7 @@ def build_ticket_field_extraction_messages(
                 "请把下面的 Agent 上下文和用户消息提取成工单字段 JSON。\n"
                 f"JSON Schema:\n{schema_text}\n\n"
                 f"Agent 上下文:\n{context_text}\n\n"
-                f"用户消息:\n{normalized_message}"
+                f"{memory_section}用户消息:\n{normalized_message}"
             ),
         },
     ]
@@ -871,7 +879,13 @@ def create_ticket_agent_model_dependencies(
 
 
 class FakePolicyRagService:
-    def answer_policy_question(self, query: str, *, access_scope=None) -> RagAnswer:
+    def answer_policy_question(
+        self,
+        query: str,
+        *,
+        access_scope=None,
+        memory_context: list[str] | None = None,
+    ) -> RagAnswer:
         normalized_query = query.strip()
         lowered_query = normalized_query.casefold()
 
@@ -1807,7 +1821,11 @@ def retrieve_policy_node(
     rag_query = state.get("normalized_message", "").strip()
     rag_service = service or create_policy_rag_service()
     access_scope = _access_scope_from_state(state)
-    rag_answer = rag_service.answer_policy_question(rag_query, access_scope=access_scope)
+    rag_answer = rag_service.answer_policy_question(
+        rag_query,
+        access_scope=access_scope,
+        memory_context=state.get("memory_context"),
+    )
 
     return {
         "rag_query": rag_query,
@@ -2865,6 +2883,7 @@ def build_ticket_agent_input(
     *,
     actor_roles: tuple[str, ...] | None = None,
     actor_tenant_id: str | None = None,
+    memory_context: list[str] | None = None,
 ) -> TicketAgentState:
     state: TicketAgentState = {
         "user_message": user_message,
@@ -2872,6 +2891,7 @@ def build_ticket_agent_input(
         "node_history": [],
         "actor_roles": actor_roles,
         "actor_tenant_id": actor_tenant_id,
+        "memory_context": memory_context,
     }
     if history:
         state["history"] = history
@@ -2974,12 +2994,14 @@ def run_ticket_agent_in_thread(
     history: list[str] | None = None,
     actor_roles: tuple[str, ...] | None = None,
     actor_tenant_id: str | None = None,
+    memory_context: list[str] | None = None,
 ) -> TicketAgentState:
     initial_state = build_ticket_agent_input(
         user_message,
         history=history,
         actor_roles=actor_roles,
         actor_tenant_id=actor_tenant_id,
+        memory_context=memory_context,
     )
     if actor_id is not None:
         initial_state["ticket_actor_id"] = actor_id

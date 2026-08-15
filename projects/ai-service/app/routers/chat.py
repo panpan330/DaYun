@@ -551,6 +551,26 @@ def submit_console_agent_feedback(
     )
 
 
+@router.get("/api/ai/agent/memory")
+def get_agent_memory(
+    actor: ConsoleAgentActor = Depends(get_console_agent_actor),
+) -> dict:
+    from app.services.user_memory import UserMemoryStore
+
+    facts = UserMemoryStore(settings=get_settings()).get_facts(actor)
+    return {"facts": facts}
+
+
+@router.delete("/api/ai/agent/memory")
+def clear_agent_memory(
+    actor: ConsoleAgentActor = Depends(get_console_agent_actor),
+) -> dict:
+    from app.services.user_memory import UserMemoryStore
+
+    UserMemoryStore(settings=get_settings()).clear(actor)
+    return {"cleared": True}
+
+
 @router.post(
     "/api/ai/agent/conversations/{conversation_id}/human-reply",
     response_model=ConsoleAgentResponse,

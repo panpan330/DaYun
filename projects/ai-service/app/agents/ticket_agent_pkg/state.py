@@ -330,7 +330,13 @@ class PendingTicketConfirmation(TypedDict):
 
 
 class PolicyRagService(Protocol):
-    def answer_policy_question(self, query: str) -> RagAnswer:
+    def answer_policy_question(
+        self,
+        query: str,
+        *,
+        access_scope=None,
+        memory_context: list[str] | None = None,
+    ) -> RagAnswer:
         """Return a grounded policy answer or a no-context fallback."""
 
 
@@ -374,6 +380,7 @@ class TicketAgentState(TypedDict, total=False):
     agent_trace_id: str
     normalized_message: str
     history: list[str]
+    memory_context: list[str] | None
     actor_roles: tuple[str, ...]
     actor_tenant_id: str | None
     emotion: CustomerEmotion

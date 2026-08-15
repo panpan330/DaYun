@@ -6,6 +6,7 @@ from typing import Annotated, TypedDict
 
 class SupervisorState(TypedDict, total=False):
     user_message: str
+    memory_context: list[str] | None
     emotion: str
     emotion_reason: str
     emotion_handoff_requested: bool
@@ -59,6 +60,7 @@ class SupervisorState(TypedDict, total=False):
 
 class KnowledgeWorkerState(TypedDict, total=False):
     normalized_message: str
+    memory_context: list[str] | None
     emotion: str
     emotion_reason: str
     emotion_handoff_requested: bool
@@ -79,6 +81,7 @@ class KnowledgeWorkerState(TypedDict, total=False):
 
 class OrderWorkerState(TypedDict, total=False):
     normalized_message: str
+    memory_context: list[str] | None
     emotion: str
     emotion_reason: str
     emotion_handoff_requested: bool
@@ -98,6 +101,7 @@ class OrderWorkerState(TypedDict, total=False):
 
 class TicketWorkerState(TypedDict, total=False):
     normalized_message: str
+    memory_context: list[str] | None
     emotion: str
     emotion_reason: str
     emotion_handoff_requested: bool

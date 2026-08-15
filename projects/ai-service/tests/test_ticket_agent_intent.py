@@ -2114,6 +2114,7 @@ def test_build_ticket_agent_input_returns_initial_state() -> None:
             "node_history": [],
             "actor_roles": None,
             "actor_tenant_id": None,
+            "memory_context": None,
         }
     finally:
         reset_trace_id(token)

@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     app_version: str = Field(default="0.1.0")
     model_name: str = Field(default="mock-chat-model")
     llm_provider: str = Field(default="openai-compatible")
-    llm_model: str = Field(default="qwen3.7-plus")
+    llm_model: str = Field(default="qwen3.7-max")
     llm_fast_model: str | None = Field(default=None)
     llm_balanced_model: str | None = Field(default=None)
     llm_strong_model: str | None = Field(default=None)
@@ -120,6 +120,9 @@ class Settings(BaseSettings):
     cost_sync_interval_seconds: float = Field(default=30.0, ge=5.0, le=600.0)
     agent_history_max_rounds: int = Field(default=10, ge=1, le=50)
     agent_history_max_tokens: int = Field(default=3000, ge=200, le=20000)
+    agent_memory_enabled: bool = Field(default=True)
+    agent_memory_ttl_minutes: int = Field(default=43200)
+    agent_detail_events_enabled: bool = Field(default=True)
     agent_checkpoint_key_prefix: str = Field(default="ai-service:agent")
     mcp_server_name: str = Field(
         default="ai-service-learning-mcp",
@@ -210,7 +213,7 @@ class Settings(BaseSettings):
         for model in (tier_model, self.llm_model):
             if model and model.strip():
                 return model.strip()
-        return "qwen3.7-plus"
+        return "qwen3.7-max"
 
     @property
     def resolved_llm_fallback_model(self) -> str:

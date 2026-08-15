@@ -8,7 +8,7 @@ from app.rag import pipeline as pipeline_module
 
 
 class _FakeAnswerService:
-    def generate_answer_with_citations(self, query, *, chunks):
+    def generate_answer_with_citations(self, query, *, chunks, memory_context=None):
         from app.rag.generator import RagAnswer, RagAnswerStatus
 
         return RagAnswer(answer="生成回答", status=RagAnswerStatus.ANSWERED)

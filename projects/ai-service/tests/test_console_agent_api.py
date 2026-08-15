@@ -1262,7 +1262,7 @@ def test_production_policy_rag_service_passes_permission_filters(monkeypatch):
 
     captured = {}
 
-    def fake_enhanced(query, *, settings, access_scope=None):
+    def fake_enhanced(query, *, settings, access_scope=None, memory_context=None):
         captured["query"] = query
         captured["access_scope"] = access_scope
         return RagAnswer(

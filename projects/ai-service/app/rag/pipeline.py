@@ -97,12 +97,18 @@ def enhanced_rag_answer(
     *,
     settings,
     access_scope=None,
+    memory_context: list[str] | None = None,
 ) -> RagAnswer:
     """Run the RAG pipeline with optional advanced modules (feature switches)."""
     from app.core.exceptions import AppException
 
     try:
-        return _enhanced_rag_answer_inner(query, settings=settings, access_scope=access_scope)
+        return _enhanced_rag_answer_inner(
+            query,
+            settings=settings,
+            access_scope=access_scope,
+            memory_context=memory_context,
+        )
     except ValueError as exc:
         message = str(exc)
         if "embedding" in message.lower() or "api key" in message.lower():
@@ -120,7 +126,9 @@ def enhanced_rag_answer(
         raise
 
 
-def _enhanced_rag_answer_inner(query, *, settings, access_scope=None) -> RagAnswer:
+def _enhanced_rag_answer_inner(
+    query, *, settings, access_scope=None, memory_context: list[str] | None = None
+) -> RagAnswer:
     working_query = query.strip()
 
     # 1. rewrite
@@ -187,6 +195,7 @@ def _enhanced_rag_answer_inner(query, *, settings, access_scope=None) -> RagAnsw
     answer = create_rag_answer_service(settings).generate_answer_with_citations(
         query,
         chunks=reranked,
+        memory_context=memory_context,
     )
 
     # 8. citation verification (log-only enhancement)

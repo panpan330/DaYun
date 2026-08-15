@@ -13,13 +13,16 @@ def test_settings_use_default_values() -> None:
     assert settings.app_version == "0.1.0"
     assert settings.model_name == "mock-chat-model"
     assert settings.llm_provider == "openai-compatible"
-    assert settings.llm_model == "qwen3.7-plus"
+    assert settings.llm_model == "qwen3.7-max"
+    assert settings.agent_memory_enabled is True
+    assert settings.agent_memory_ttl_minutes == 43200
+    assert settings.agent_detail_events_enabled is True
     assert settings.llm_fast_model is None
     assert settings.llm_balanced_model is None
     assert settings.llm_strong_model is None
-    assert settings.resolved_llm_fast_model == "qwen3.7-plus"
-    assert settings.resolved_llm_balanced_model == "qwen3.7-plus"
-    assert settings.resolved_llm_strong_model == "qwen3.7-plus"
+    assert settings.resolved_llm_fast_model == "qwen3.7-max"
+    assert settings.resolved_llm_balanced_model == "qwen3.7-max"
+    assert settings.resolved_llm_strong_model == "qwen3.7-max"
     assert settings.llm_default_route_tier == "balanced"
     assert settings.llm_route_long_input_chars == 1200
     assert "摘要" in settings.llm_route_fast_keywords
@@ -27,7 +30,7 @@ def test_settings_use_default_values() -> None:
     assert settings.llm_enable_fallback is True
     assert settings.llm_fallback_model is None
     assert settings.llm_fallback_tier == "balanced"
-    assert settings.resolved_llm_fallback_model == "qwen3.7-plus"
+    assert settings.resolved_llm_fallback_model == "qwen3.7-max"
     assert "LLM_TIMEOUT" in settings.llm_fallback_error_codes
     assert settings.llm_base_url is None
     assert settings.llm_api_key is None

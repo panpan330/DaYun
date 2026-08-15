@@ -106,7 +106,9 @@ class FakePolicyRagService:
         self.error = error
         self.queries: list[str] = []
 
-    def answer_policy_question(self, query: str, *, access_scope=None) -> RagAnswer:
+    def answer_policy_question(
+        self, query: str, *, access_scope=None, memory_context=None
+    ) -> RagAnswer:
         self.queries.append(query)
         if self.error is not None:
             raise self.error

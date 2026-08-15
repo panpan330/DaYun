@@ -120,6 +120,15 @@ export interface ConsoleAgentStreamStage {
   label: string
 }
 
+export interface ConsoleAgentStreamDetail {
+  kind: 'retrieval' | 'tool' | 'model'
+  kb?: string
+  hits?: number
+  tool?: string
+  order_id?: string
+  model?: string
+}
+
 export interface RagCitation {
   source_index: number
   source: string
@@ -189,6 +198,7 @@ export async function streamConsoleAgentMessage(
     conversationId?: string
   },
   onStage: (stage: ConsoleAgentStreamStage) => void,
+  onDetail?: (detail: ConsoleAgentStreamDetail) => void,
 ): Promise<ConsoleAgentResponse> {
   const commonHeaders = aiApi.defaults.headers.common as Record<string, unknown>
   const headers: Record<string, string> = {
@@ -237,6 +247,8 @@ export async function streamConsoleAgentMessage(
       }
       if (parsed.event === 'stage') {
         onStage(parsed.data as ConsoleAgentStreamStage)
+      } else if (parsed.event === 'detail') {
+        onDetail?.(parsed.data as ConsoleAgentStreamDetail)
       } else if (parsed.event === 'result') {
         result = parsed.data as ConsoleAgentResponse
       } else if (parsed.event === 'error') {
